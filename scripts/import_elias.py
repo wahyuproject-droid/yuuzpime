@@ -56,7 +56,8 @@ css+="""
 """
 write("src/app/globals.css",css)
 nav=files["src/components/layout/Navbar.tsx"].decode()
-nav,n=re.subn(r'<ShadcnButton\b(?=[^>]*onClick=\{\(\) => handleNav\(\'/login\'\)\})[^>]*>\s*Sign In\s*</ShadcnButton>', '<span className="text-xs text-ink-500 px-3">Guest</span>',nav)
+nav,n=re.subn(r'<ShadcnButton\b(?:(?!</ShadcnButton>)[\s\S])*?</ShadcnButton>', lambda m: '<span className="text-xs text-ink-500 px-3">Guest</span>' if "handleNav('/login')" in m.group(0) else m.group(0),nav)
+n=nav.count('>Guest</span>')
 assert n==2,n
 write("src/components/layout/Navbar.tsx",nav)
 # Guest is a real unauthenticated session, never an invented privileged account.
