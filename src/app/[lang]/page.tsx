@@ -3,7 +3,7 @@ import { CookieConfigKey, InitialConfig } from "@/constants/configs";
 import readCookiesData from "@/lib/configs/readCookiesData";
 import { ParsedConfigType } from "@/types/Configs/ParsedConfig.type";
 import getSafeConfigValues from "@/lib/configs/getSafeConfigValues";
-import type { Locale } from "@/i18n-config";
+import { normalizeLocale } from "@/i18n-config";
 import ServerFetch from "@/components/fetch/ServerFetch/ServerFetch";
 import { Suspense } from "react";
 import HomeTitles from "@/components/layout/HomeTitles/HomeTitles";
@@ -13,9 +13,9 @@ import HomeTitlesClient from "@/components/layout/HomeTitlesClient/HomeTitlesCli
 export default async function Home({
     params,
 }: {
-    params: Promise<{ lang: Locale }>;
+    params: Promise<{ lang: string }>;
 }) {
-    const { lang } = await params;
+    const lang = normalizeLocale((await params).lang);
     const configs = await getCookie({
         key: CookieConfigKey,
     });

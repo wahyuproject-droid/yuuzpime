@@ -4,7 +4,7 @@ import "./globals.css";
 import { ConfigsProvider } from "@/lib/providers/ConfigsProvider";
 import { getCookiesArray } from "@/lib/actions/cookies";
 import TanstackQueryProviders from "@/lib/providers/TanstackQueryProviders";
-import { i18n, type Locale } from "@/i18n-config";
+import { i18n, normalizeLocale } from "@/i18n-config";
 import { getDictionary } from "@/get-dictionary";
 import { CookieConfigKey, InitialConfig, PlaceholderAccount } from "@/constants/configs";
 import readCookiesData from "@/lib/configs/readCookiesData";
@@ -42,10 +42,10 @@ export async function generateMetadata({
     params,
 }: {
     params: Promise<{
-        lang: Locale;
+        lang: string;
     }>;
 }): Promise<Metadata> {
-    const { lang } = await params;
+    const lang = normalizeLocale((await params).lang);
     const { metadata: { title, description } } = await getDictionary(lang);
 
     return {
@@ -68,9 +68,9 @@ export default async function RootLayout({
     params,
 }: Readonly<{
     children: React.ReactNode;
-    params: Promise<{ lang: Locale }>;
+    params: Promise<{ lang: string }>;
 }>) {
-    const { lang } = await params;
+    const lang = normalizeLocale((await params).lang);
     const headersList = await headers();
     const cookieStore = await cookies();
 
