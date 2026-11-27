@@ -1,90 +1,11 @@
-<a name="readme-top"></a>
+## ⚠️ Note: This project is no longer managed. Use [AnimeDexLite](https://github.com/TechShreyash/AnimeDexLite) Instead
 
-<!-- PROJECT LOGO -->
-<br />
-<div align="center">
-  <a href="https://github.com/Khanhtran47/remix-movie">
-    <img src="app/assets/images/logo_loading.png" alt="Logo" width="80" height="80">
-  </a>
+AnimeDexLite is a new version of AnimeDex built using html, css and js
+- Repo : https://github.com/TechShreyash/AnimeDexLite
 
-<h2 align="center">YuuZPime</h2>
-  <p align="center">
-    A web app for exploring, watching movies, tv shows and anime built with Remix and NextUI.
-    <br />
-  </p>
-</div>
 
-> **Warning**
-> This app is a work in progress.
-> <br/>
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li><a href="#tech-stack">Tech Stack</a></li>
-    <li><a href="#development">Development</a></li>
-    <li><a href="#license">License</a></li>
-  </ol>
-</details>
-<br/>
 
-<div align="center">
-  <a href="https://github.com/Khanhtran47/remix-movie">
-    <img src="public/images/screenshot.png" alt="screenshot">
-  </a>
-</div>
-<br/>
+### 👤 Contact Me
 
-<!-- TECH STACK -->
-
-## Tech Stack
-
-- **Remix** with Typescript
-- **NextUI** for pre-made components and themes
-- Styled using **TailwindCSS** and **Stitches**
-- **SwiperJS** for touch slider
-- Internationalization using **i18n**
-- Authentication, database using **Supabase**
-- UI Components built using **Radix UI**
-- Animation using **Framer Motion**
-- State management using **Zustand**
-- Custom media player using **Artplayer**
-- Cache using **LRU Cache**
-- Color manipulation and conversion using **Tinycolor**
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- DEVELOPMENT -->
-
-## Development
-
-<br/>
-
-1. Install dependencies using pnpm
-
-```sh
-pnpm install
-```
-
-2. Copy `.env-example` and update the variables
-
-3. Start the development server
-
-```sh
-pnpm dev
-```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- LICENSE -->
-
-## License
-
-Distributed under GNU GPL version 3. See [LICENSE.txt](LICENSE.txt) and [NOTICE.md](NOTICE.md).
-
-Branding modifications: **YuuZGilakPrompt** · [SociaBuzz](https://sociabuzz.com/yuuzdisini).
-
-Based on Sora by the original contributors.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+[![Telegram Channel](https://img.shields.io/static/v1?label=Join&message=Telegram%20Channel&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots) [![Telegram Group](https://img.shields.io/static/v1?label=Join&message=Telegram%20Group&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots_Support)
