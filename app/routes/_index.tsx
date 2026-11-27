@@ -7,7 +7,6 @@ import type { Handle } from '~/types/handle';
 import type { IMedia } from '~/types/media';
 import { getAnimePopular } from '~/services/consumet/anilist/anilist.server';
 import { i18next } from '~/services/i18n';
-import { authenticate } from '~/services/supabase';
 import {
   getListDiscover,
   getListMovies,
@@ -28,19 +27,19 @@ export const handle: Handle = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const [, locale] = await Promise.all([
-    authenticate(request, undefined, true),
-    i18next.getLocale(request),
-  ]);
+  // Public catalog landing page; protected routes retain their checks.
+  const locale = await i18next.getLocale(request);
 
   const url = new URL(request.url);
   let page = Number(url.searchParams.get('page'));
-  if (!page && (page < 1 || page > 1000)) page = 1;
+  if (!Number.isInteger(page) || page < 1 || page > 1000) page = 1;
+  const configured = Boolean(process.env.TMDB_API_KEY?.trim());
+  const empty = { page: 0, totalPages: 0, items: [], totalResults: 0 };
 
   const [todayTrending, movies, shows, anime, people] = await Promise.all([
-    getTrending('all', 'day', locale, page),
-    getListMovies('popular', locale, page),
-    getListDiscover(
+    configured ? getTrending('all', 'day', locale, page).catch(() => empty) : Promise.resolve(empty),
+    configured ? getListMovies('popular', locale, page).catch(() => empty) : Promise.resolve(empty),
+    configured ? getListDiscover(
       'tv',
       undefined,
       undefined,
@@ -52,9 +51,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       undefined,
       undefined,
       100,
-    ),
-    getAnimePopular(page, 16),
-    getListPeople('popular', locale, page),
+    ).catch(() => empty) : Promise.resolve(empty),
+    getAnimePopular(page, 16).catch(() => undefined),
+    configured ? getListPeople('popular', locale, page).catch(() => empty) : Promise.resolve(empty),
   ]);
 
   return json(
@@ -102,6 +101,16 @@ const RootIndex = () => {
         listType="slider-banner"
       />
       <div className="mt-9 flex w-full flex-col items-center justify-start px-3 sm:px-5">
+        {!rootData?.tmdbAvailable && (
+          <p role="status" className="mb-4 w-full rounded-xl border border-default-200 p-4 text-sm text-default-500">
+            Katalog film dan serial belum tersedia. Konfigurasi layanan TMDB diperlukan.
+          </p>
+        )}
+        {!popularAnime?.length && (
+          <p role="status" className="mb-4 w-full rounded-xl border border-default-200 p-4 text-sm text-default-500">
+            Katalog anime sedang tidak tersedia.
+          </p>
+        )}
         <MediaList
           genresMovie={rootData?.genresMovie}
           genresTv={rootData?.genresTv}

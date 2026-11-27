@@ -8,8 +8,6 @@ import FontStyles500 from '@fontsource/sora/500.css';
 import FontStyles600 from '@fontsource/sora/600.css';
 import FontStyles700 from '@fontsource/sora/700.css';
 import FontStyles800 from '@fontsource/sora/800.css';
-import { Button } from '@nextui-org/button';
-import { Image as NextUIImage } from '@nextui-org/image';
 import { NextUIProvider as NextUIv2Provider } from '@nextui-org/system';
 import { LiveReload, logger, useSWEffect } from '@remix-pwa/sw';
 import { cssBundleHref } from '@remix-run/css-bundle';
@@ -60,8 +58,6 @@ import swiperNavigationStyles from 'swiper/css/pagination';
 import swiperThumbsStyles from 'swiper/css/thumbs';
 
 import Home from './assets/icons/HomeIcon';
-import Refresh from './assets/icons/RefreshIcon';
-import pageNotFound from './assets/images/404.gif';
 import logoLoading from './assets/images/logo_loading.png';
 import { BreadcrumbItem } from './components/elements/Breadcrumb';
 import Layout from './components/layouts/Layout';
@@ -179,15 +175,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     day: 'numeric',
   });
   const toast = getToastSession(request);
-  const message = await toast.getMessage();
+  const message = await toast.getMessage().catch(() => undefined);
+  const [genresMovie, genresTv, languages] = process.env.TMDB_API_KEY?.trim()
+    ? await Promise.all([getListGenre('movie', locale).catch(() => ({})), getListGenre('tv', locale).catch(() => ({})), getListLanguages().catch(() => undefined)])
+    : [{}, {}, undefined] as const;
 
   return json(
     {
       user: user || undefined,
       locale,
-      genresMovie: await getListGenre('movie', locale),
-      genresTv: await getListGenre('tv', locale),
-      languages: await getListLanguages(),
+      genresMovie,
+      genresTv,
+      languages: languages ?? [],
+      tmdbAvailable: Boolean(languages?.length),
       gaTrackingId,
       deviceDetect,
       ENV: {
@@ -558,161 +558,20 @@ const App = () => {
 
 export function ErrorBoundary() {
   const error = useRouteError();
-  const isProd = process.env.NODE_ENV === 'production';
-
-  if (isRouteErrorResponse(error)) {
-    let message;
-    switch (error.status) {
-      case 401:
-        message = isProd
-          ? 'Oops! Looks like you tried to visit a page that you do not have access to.'
-          : error.data;
-        break;
-      case 404:
-        message = isProd
-          ? 'Oops! Looks like you tried to visit a page that does not exist.'
-          : error.data;
-        break;
-      default:
-        throw new Error(error.data || error.statusText);
-    }
-    return (
-      <Document title={`${error.status} ${error.statusText}`}>
-        <RemixThemesProvider
-          defaultTheme="system"
-          attribute="class"
-          enableColorScheme
-          enableSystem
-          themes={listThemes}
-          value={themeValues}
-        >
-          <div className="flex h-screen flex-col items-center justify-center gap-y-4">
-            <NextUIImage width={480} src={pageNotFound} alt="404" className="object-cover" />
-            <h1 className="text-center text-warning">
-              {error.status} {error.statusText}
-            </h1>
-            <p>{message}</p>
-            <div className="flex w-full flex-row items-center justify-center gap-x-4">
-              <Button
-                size="md"
-                variant="ghost"
-                color="success"
-                startContent={<Home />}
-                type="button"
-                onPress={() => {
-                  window.location.href = '/';
-                }}
-              >
-                Back to Home
-              </Button>
-              <Button
-                size="md"
-                variant="ghost"
-                color="warning"
-                startContent={<Refresh filled />}
-                type="button"
-                onPress={() => {
-                  window.location.reload();
-                }}
-              >
-                Reload Page
-              </Button>
-            </div>
-          </div>
-        </RemixThemesProvider>
-      </Document>
-    );
-  } else if (error instanceof Error) {
-    console.log(error);
-    return (
-      <Document title="Error!">
-        <RemixThemesProvider
-          defaultTheme="system"
-          attribute="class"
-          enableColorScheme
-          enableSystem
-          themes={listThemes}
-          value={themeValues}
-        >
-          <div className="flex h-screen flex-col items-center justify-center gap-y-4">
-            <NextUIImage width={480} src={pageNotFound} alt="404" className="object-cover" />
-            <h1 className="text-center text-danger">There was an error</h1>
-            <p>{error.message}</p>
-            <div className="flex w-full flex-row items-center justify-center gap-x-4">
-              <Button
-                size="md"
-                variant="ghost"
-                color="success"
-                startContent={<Home />}
-                type="button"
-                onPress={() => {
-                  window.location.href = '/';
-                }}
-              >
-                Back to Home
-              </Button>
-              <Button
-                size="md"
-                variant="ghost"
-                color="warning"
-                startContent={<Refresh filled />}
-                type="button"
-                onPress={() => {
-                  window.location.reload();
-                }}
-              >
-                Reload Page
-              </Button>
-            </div>
-          </div>
-        </RemixThemesProvider>
-      </Document>
-    );
-  } else {
-    return (
-      <Document title="Error!">
-        <RemixThemesProvider
-          defaultTheme="system"
-          attribute="class"
-          enableColorScheme
-          enableSystem
-          themes={listThemes}
-          value={themeValues}
-        >
-          <div className="flex h-screen flex-col items-center justify-center gap-y-4">
-            <NextUIImage width={480} src={pageNotFound} alt="404" className="object-cover" />
-            <h1 className="text-center text-danger">Unknown error</h1>
-            <div className="flex w-full flex-row items-center justify-center gap-x-4">
-              <Button
-                size="md"
-                variant="ghost"
-                color="success"
-                startContent={<Home />}
-                type="button"
-                onPress={() => {
-                  window.location.href = '/';
-                }}
-              >
-                Back to Home
-              </Button>
-              <Button
-                size="md"
-                variant="ghost"
-                color="warning"
-                startContent={<Refresh filled />}
-                type="button"
-                onPress={() => {
-                  window.location.reload();
-                }}
-              >
-                Reload Page
-              </Button>
-            </div>
-          </div>
-        </RemixThemesProvider>
-      </Document>
-    );
-  }
+  const status = isRouteErrorResponse(error) ? error.status : 500;
+  if (!isRouteErrorResponse(error)) console.error(error);
+  const message = status === 403 ? 'Halaman ini tidak dapat diakses.' :
+    status === 404 ? 'Halaman tidak ditemukan.' : 'Layanan sedang bermasalah. Silakan coba lagi.';
+  return (
+    <html lang="id">
+      <head><meta charSet="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>YuuZPime - {status}</title><Links /></head>
+      <body style={{ background: '#101010', color: '#fff', margin: 0, fontFamily: 'system-ui, sans-serif' }}>
+        <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24 }}>
+          <section style={{ textAlign: 'center' }}><h1>YuuZPime</h1><p>{status} — {message}</p><a href="/" style={{ color: '#fff' }}>Kembali ke beranda</a></section>
+        </main><Scripts />
+      </body>
+    </html>
+  );
 }
 
 let AppExport = App;
