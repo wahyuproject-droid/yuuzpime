@@ -1,0 +1,31 @@
+name: Import verified EliasDex guest source
+on:
+  push:
+    branches: [import-eliasdex-guest]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify and prepare uploaded source
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 'https://codeload.github.com/Eliasilyz/EliasDex-2/zip/499c63354c6d8c3cacd58b4f46ecafa81dcc9d4c' -o "$RUNNER_TEMP/elias.zip"
+          python3 scripts/import_elias.py "$RUNNER_TEMP/elias.zip" "$RUNNER_TEMP/verified-elias"
+      - name: Replace main atomically
+        run: |
+          set -euo pipefail
+          git fetch origin refs/heads/main
+          test "$(git rev-parse FETCH_HEAD)" = '5c58a3ea1657f131b75d794da7a97df9126d97ff'
+          git switch -C main FETCH_HEAD
+          git rm -r --ignore-unmatch .
+          cp -a "$RUNNER_TEMP/verified-elias/." .
+          git add -A -f
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Replace Anisun with verified EliasDex 2 YuuZPime guest source'
+          git push origin HEAD:refs/heads/main
