@@ -1,6 +1,2 @@
-requests
-bs4
-flask
-yarl
-pycryptodomex
-gunicorn
+Flask>=3.1,<4
+requests>=2.32,<3

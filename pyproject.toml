@@ -1,19 +1,8 @@
-[tool.poetry]
-name = "repl_nix_AnimeDex"
-version = "0.1.0"
-description = ""
-authors = ["Replit user <<>>"]
+[project]
+name = "yuuzpime"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = ["Flask>=3.1,<4", "requests>=2.32,<3"]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-yarl = "^1.8.1"
-bs4 = "^0.0.1"
-Flask = "^2.3.2"
-pycryptodomex = "^3.15.0"
-requests = "^2.31.0"
-
-[tool.poetry.dev-dependencies]
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.vercel]
+entrypoint = "app:app"

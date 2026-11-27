@@ -1,268 +1,129 @@
-from utils.db import update_views, update_watch
-from utils.html_gen import (
-    animeRecHtml,
-    animeRecHtml2,
-    episodeHtml,
-    get_eps_html,
-    get_eps_html2,
-    get_recent_html,
-    get_search_html,
-    get_selector_btns,
-    get_genre_html,
-    get_trending_html,
-    slider_gen,
-)
-from flask import Flask, render_template, request, redirect, send_file
-from utils.anilist import Anilist
-from utils.others import get_atitle, get_other_title, get_studios, get_t_from_u
-from utils.techzapi import TechZApi
-from config import API_KEY
+from functools import lru_cache
+from html import unescape
+from time import time
+from urllib.parse import urlsplit
+import re
+
+import requests
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
-TechZApi = TechZApi(API_KEY)
+app.config["MAX_CONTENT_LENGTH"] = 16384
+API = "https://graphql.anilist.co"
+FIELDS = """
+id title { romaji english } coverImage { large medium }
+bannerImage episodes format status seasonYear averageScore
+genres description(asHtml: false) isAdult
+"""
+HOME_QUERY = """query($page:Int) {
+ popular: Page(page:$page, perPage:16) {
+  media(type:ANIME,isAdult:false,sort:POPULARITY_DESC) { %s }
+ }
+ recent: Page(page:$page, perPage:16) {
+  media(type:ANIME,isAdult:false,status:RELEASING,sort:TRENDING_DESC) { %s }
+ }
+}""" % (FIELDS, FIELDS)
+SEARCH_QUERY = """query($q:String,$page:Int) {
+ Page(page:$page,perPage:24) {
+  pageInfo { hasNextPage }
+  media(type:ANIME,isAdult:false,search:$q,sort:SEARCH_MATCH) { %s }
+ }
+}""" % FIELDS
+DETAIL_QUERY = """query($id:Int) {
+ Media(id:$id,type:ANIME,isAdult:false) {
+  %s externalLinks { site url type }
+ }
+}""" % FIELDS
 
+@lru_cache(maxsize=128)
+def fetch(query, variables, bucket):
+    response = requests.post(API, json={"query": query, "variables": dict(variables)},
+                             headers={"Accept": "application/json"}, timeout=(3, 7))
+    response.raise_for_status()
+    payload = response.json()
+    if payload.get("errors") or not isinstance(payload.get("data"), dict):
+        raise ValueError("AniList request failed")
+    return payload["data"]
 
-@app.route("/favicon.ico")
-def favicon():
-    return redirect(
-        "https://cdn.jsdelivr.net/gh/TechShreyash/AnimeDex@main/static/img/favicon.ico"
-    )
+def catalog(query, **variables):
+    try:
+        return fetch(query, tuple(sorted(variables.items())), int(time() // 300)), False
+    except (requests.RequestException, ValueError, TypeError):
+        app.logger.warning("Catalog API temporarily unavailable")
+        return {}, True
 
+def entries(data, key):
+    return [x for x in (data.get(key) or {}).get("media", [])
+            if isinstance(x, dict) and x.get("isAdult") is False]
+
+def page_number():
+    return max(1, min(request.args.get("page", 1, type=int), 100))
+
+@app.template_filter("anime_title")
+def anime_title(item):
+    titles = item.get("title") or {}
+    return titles.get("english") or titles.get("romaji") or "Anime"
+
+@app.template_filter("safe_image")
+def safe_image(value):
+    try:
+        if urlsplit(value or "").scheme == "https":
+            return value
+    except ValueError:
+        pass
+    return "/static/img/cover.jpg"
+
+@app.template_filter("plain_description")
+def plain_description(value):
+    return unescape(re.sub(r"<[^>]*>", " ", value or "")).strip()
 
 @app.route("/")
 def home():
-    html = render_template("home_min.html")
-    div1 = get_trending_html(TechZApi.top_animedex())
-    div2 = get_recent_html(TechZApi.gogo_latest())
-    sliders = slider_gen()
+    page = page_number()
+    data, unavailable = catalog(HOME_QUERY, page=page)
+    popular = entries(data, "popular")
+    recent = entries(data, "recent")
+    return render_template("catalog.html", popular=popular, recent=recent,
+                           unavailable=unavailable, page=page, mode="home")
 
-    html = (
-        html.replace("MOST_POPULAR", div1)
-        .replace("RECENT_RELEASE", div2)
-        .replace("SLIDERS", sliders)
-    )
-    update_views("home-animedex")
-    return html
+@app.route("/search")
+def search():
+    query = request.args.get("query", "").strip()[:100]
+    page = page_number()
+    data, unavailable = catalog(SEARCH_QUERY, q=query, page=page) if query else ({}, False)
+    info = (data.get("Page") or {}).get("pageInfo") or {}
+    return render_template("catalog.html", results=entries(data, "Page"), query=query,
+                           unavailable=unavailable, page=page, next_page=info.get("hasNextPage"),
+                           mode="search")
 
-
-@app.route("/anime/<anime>")
-def get_anime(anime):
-    try:
-        data = TechZApi.gogo_anime(anime)
-        TITLE = data.get("title")
-        IMG = data.get("img")
-        LANG = data.get("lang")
-        TYPE = data.get("type")
-        WATCHNOW = "/episode/" + data.get("id") + "/1"
-        OTHER = data.get("other name")
-        TOTAL = str(data.get("total_ep"))
-        YEAR = data.get("year")
-        STATUS = data.get("status")
-        STUDIO = "?"
-        GENERES = get_genre_html(data.get("genre").split(","))
-        SYNOPSIS = data.get("summary")
-
-        x = anime.lower()
-        if x.endswith("-dub"):
-            x = x[:-4]
-        if x.endswith("-sub"):
-            x = x[:-4]
-        x = get_t_from_u(x).replace("-", " ")
-
+@app.route("/anime/<int:media_id>")
+def detail(media_id):
+    data, unavailable = catalog(DETAIL_QUERY, id=media_id)
+    item = data.get("Media")
+    if not item or item.get("isAdult") is not False:
+        return render_template("catalog.html", mode="missing", unavailable=unavailable), 503 if unavailable else 404
+    # Only recognized official streaming platforms; never fetch or proxy arbitrary URLs.
+    approved = {"crunchyroll.com", "netflix.com", "hidive.com", "disneyplus.com",
+                "primevideo.com", "bilibili.tv", "iq.com", "wetv.vip"}
+    links = []
+    for link in item.get("externalLinks") or []:
         try:
-            DISPLAY_ANIME = animeRecHtml(Anilist().get_recommendation(x))
-        except:
-            DISPLAY_ANIME = ""
-        EPISODES = get_eps_html(data=data.get("episodes"))
+            parsed = urlsplit(link.get("url") or "")
+            host = parsed.hostname or ""
+            if link.get("type") == "STREAMING" and parsed.scheme == "https" and not parsed.username and any(
+                host == domain or host.endswith("." + domain) for domain in approved):
+                links.append(link)
+        except (ValueError, TypeError):
+            continue
+    return render_template("catalog.html", item=item, links=links, mode="detail")
 
-        html = render_template(
-            "anime_min.html",
-            IMG=IMG,
-            TITLE=TITLE,
-            LANG=LANG,
-            TYPE=TYPE,
-            WATCHNOW=WATCHNOW,
-            OTHER=OTHER,
-            TOTAL=TOTAL,
-            YEAR=YEAR,
-            STATUS=STATUS,
-            STUDIO=STUDIO,
-        )
-    except:
-        anime = anime.lower()
-        if anime.endswith("-dub"):
-            anime = anime[:-4]
-        if anime.endswith("-sub"):
-            anime = anime[:-4]
-        anime = get_t_from_u(anime).replace("-", " ")
-        data = Anilist().anime(anime)
+@app.route("/healthz")
+def health():
+    return jsonify(status="ok", app="YuuZPime", mode="guest")
 
-        IMG = data.get("coverImage").get("medium").replace("small", "medium")
-        if not IMG:
-            IMG = data.get("bannerImage")
-        TITLE = get_atitle(data.get("title"))
-        SYNOPSIS = data.get("description")
-        OTHER = get_other_title(data.get("title"))
-        STUDIO = get_studios(data.get("studios").get("nodes"))
-        TOTAL = str(data.get("episodes"))
-        GENERES = get_genre_html(data.get("genres"))
-        DISPLAY_ANIME = animeRecHtml2(data.get("recommendations").get("edges"))
+@app.errorhandler(404)
+def not_found(_error):
+    return render_template("catalog.html", mode="missing"), 404
 
-        try:
-            EPISODES, id = get_eps_html(api=TechZApi, anime=TITLE)
-        except:
-            EPISODES, id = "", "#"
-
-        SEASON = str(data.get("season")) + " " + str(data.get("seasonYear"))
-        YEAR = data.get("seasonYear")
-        TYPE = data.get("format")
-        STATUS = data.get("status")
-        WATCHNOW = "/episode/" + id + "/1"
-
-        html = render_template(
-            "anime_min.html",
-            IMG=IMG,
-            TITLE=TITLE,
-            LANG=TYPE,
-            TYPE=SEASON,
-            WATCHNOW=WATCHNOW,
-            OTHER=OTHER,
-            TOTAL=TOTAL,
-            YEAR=YEAR,
-            STATUS=STATUS,
-            STUDIO=STUDIO,
-        )
-
-    html = html.replace("GENERES", GENERES)
-    html = html.replace("EPISODES", EPISODES)
-    html = html.replace("DISPLAY_ANIME", DISPLAY_ANIME)
-    html = html.replace("SYNOPSIS", SYNOPSIS)
-    update_views(anime)
-    return html
-
-
-@app.route("/episode/<anime>/<episode>")
-def get_episode(anime, episode):
-    anime = get_t_from_u(anime).lower()
-    episode = int(episode)
-
-    try:
-        data = TechZApi.gogo_episode(f"{anime}-episode-{episode}")
-        x = TechZApi.gogo_anime(anime)
-        total_eps = x.get("total_ep")
-        ep_list = x.get("episodes")
-    except:
-        search = TechZApi.gogo_search(anime)[0]
-        anime = search.get("id")
-        total_eps = search.get("total_ep")
-        ep_list = search.get("episodes")
-        data = TechZApi.gogo_episode(f"{anime}-episode-{episode}")
-
-    if str(request.args.get("download", True)).lower() == "false":
-        dl = False
-    else:
-        dl = True
-
-    if str(request.args.get("selector", True)).lower() == "false":
-        btn_html = ""
-    else:
-        btn_html = get_selector_btns(f"/episode/{anime}/", int(episode), int(total_eps))
-
-    ep_html, iframe = episodeHtml(data, f"{anime} - Episode {episode}", dl=dl)
-
-    if str(request.args.get("embed", False)).lower() == "true":
-        temp = render_template(
-            "embed_min.html",
-            title=f"{anime} - Episode {episode}",
-            heading=anime,
-            iframe=iframe,
-        )
-
-        if str(request.args.get("eplist", False)).lower() == "true":
-            ep_list = get_eps_html2(ep_list)
-            temp = temp.replace(
-                "LISTHTML",
-                "<div class=divo><h2>List Of Episodes:</h2><div class=divo2>EPISOS</div></div>",
-            ).replace("EPISOS", ep_list)
-        else:
-            temp = temp.replace("LISTHTML", "")
-
-    else:
-        ep_list = get_eps_html2(ep_list)
-        temp = render_template(
-            "episode_min.html",
-            title=f"{anime} - Episode {episode}",
-            heading=anime,
-            iframe=iframe,
-        ).replace("EPISOS", ep_list)
-
-    update_watch(anime)
-    return temp.replace("PROSLO", btn_html).replace("SERVER", ep_html)
-
-
-@app.route("/search", methods=["GET"])
-def search_anime():
-    anime = request.args.get("query").lower().strip()
-
-    if anime.endswith("-dub"):
-        anime = anime[:-4]
-    if anime.endswith("-sub"):
-        anime = anime[:-4]
-
-    html = render_template("search_min.html", aid=anime.replace("+", " "))
-
-    data = TechZApi.gogo_search(anime)
-    display = get_search_html(data)
-
-    html = html.replace("SEARCHED", display)
-    update_views("search-animedex")
-    return html
-
-
-@app.route("/embed")
-def get_embed():
-    try:
-        url = request.args.get("url")
-        file = False
-        if url:
-            if ".mp4" in url or ".mkv" in url:
-                file = url
-            else:
-                if request.args.get("token"):
-                    url += f'&token={request.args.get("token")}'
-                if request.args.get("expires"):
-                    url += f'&expires={request.args.get("expires")}'
-
-                file = TechZApi.gogo_stream(url)
-                server = int(request.args.get("server"))
-                if server == 1:
-                    file = file.get("source")[0].get("file")
-                elif server == 2:
-                    file = file.get("source_bk")[0].get("file")
-        else:
-            file = request.args.get("file")
-    except:
-        file = request.args.get("file")
-    if not file:
-        return redirect(url)
-    title = request.args.get("title")
-
-    return render_template("vid_min.html", m3u8=file, title=title)
-
-
-@app.route("/api/latest/<page>")
-def latest(page):
-    try:
-        data = TechZApi.gogo_latest(page)
-        html = get_recent_html(data)
-        return {"html": html}
-    except:
-        return {"html": ""}
-
-
-@app.route("/robots.txt")
-def robots_txt():
-    try:
-        return send_file("static/robots.txt")
-    except:
-        return {"html": ""}
+if __name__ == "__main__":
+    app.run()

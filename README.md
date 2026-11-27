@@ -1,11 +1,7 @@
-## ⚠️ Note: This project is no longer managed. Use [AnimeDexLite](https://github.com/TechShreyash/AnimeDexLite) Instead
+# YuuZPime
 
-AnimeDexLite is a new version of AnimeDex built using html, css and js
-- Repo : https://github.com/TechShreyash/AnimeDexLite
+Modifikasi AnimeDex oleh YuuZGilakPrompt. Source asli lengkap tersedia pada commit 3273c930d0306177ada58695999e90dc17acfe14. Lisensi MIT dan copyright TechShreyash dipertahankan.
 
+Mode tamu, tanpa Supabase atau TMDB. Katalog memakai AniList GraphQL dan menyaring isAdult=false. Streaming lama TechZ tidak dijalankan; halaman detail dapat menampilkan tautan platform resmi yang tersedia. Tidak ada proxy URL atau unduhan video.
 
-
-
-### 👤 Contact Me
-
-[![Telegram Channel](https://img.shields.io/static/v1?label=Join&message=Telegram%20Channel&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots) [![Telegram Group](https://img.shields.io/static/v1?label=Join&message=Telegram%20Group&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots_Support)
+Lokal: pip install -r requirements.txt; python app.py. Vercel: framework Flask, default build/install settings. Health check: /healthz.
