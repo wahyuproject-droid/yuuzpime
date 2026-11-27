@@ -45,7 +45,8 @@ export async function generateMetadata({
         lang: string;
     }>;
 }): Promise<Metadata> {
-    const lang = normalizeLocale((await params).lang);
+    const { lang: rawLang } = await params;
+    const lang = normalizeLocale(rawLang);
     const { metadata: { title, description } } = await getDictionary(lang);
 
     return {
@@ -70,7 +71,8 @@ export default async function RootLayout({
     children: React.ReactNode;
     params: Promise<{ lang: string }>;
 }>) {
-    const lang = normalizeLocale((await params).lang);
+    const { lang: rawLang } = await params;
+    const lang = normalizeLocale(rawLang);
     const headersList = await headers();
     const cookieStore = await cookies();
 

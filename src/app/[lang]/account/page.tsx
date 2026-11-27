@@ -14,7 +14,8 @@ export default async function Page({
 }: {
     params: Promise<{ lang: string }>;
 }) {
-    const lang = normalizeLocale((await params).lang);
+    const { lang: rawLang } = await params;
+    const lang = normalizeLocale(rawLang);
     const accountPageItems = AccountPageItems[lang];
 
     return (

@@ -15,7 +15,8 @@ export default async function Home({
 }: {
     params: Promise<{ lang: string }>;
 }) {
-    const lang = normalizeLocale((await params).lang);
+    const { lang: rawLang } = await params;
+    const lang = normalizeLocale(rawLang);
     const configs = await getCookie({
         key: CookieConfigKey,
     });
