@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Player } from '@lottiefiles/react-lottie-player';
+import { Player } from '~/components/elements/SafeLottie';
 import { Avatar } from '@nextui-org/avatar';
 import { Button } from '@nextui-org/button';
 import { Divider } from '@nextui-org/divider';
