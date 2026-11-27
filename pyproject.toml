@@ -1,8 +1,0 @@
-[project]
-name = "yuuzpime"
-version = "1.0.0"
-requires-python = ">=3.12"
-dependencies = ["Flask>=3.1,<4", "requests>=2.32,<3"]
-
-[tool.vercel]
-entrypoint = "app:app"

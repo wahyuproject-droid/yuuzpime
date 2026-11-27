@@ -1,7 +1,7 @@
 # YuuZPime
 
-Modifikasi AnimeDex oleh YuuZGilakPrompt. Source asli lengkap tersedia pada commit 3273c930d0306177ada58695999e90dc17acfe14. Lisensi MIT dan copyright TechShreyash dipertahankan.
+Rebrand Anisun 5.0.0 (notwindstone), source commit 99a47e013763eb9f306b000ceb3c2df59eade570. Modified by YuuZGilakPrompt (2026-11-28). [SociaBuzz](https://sociabuzz.com/yuuzdisini). Original GPL-3.0 license retained. See docs/README.md for original documentation.
 
-Mode tamu, tanpa Supabase atau TMDB. Katalog memakai AniList GraphQL dan menyaring isAdult=false. Streaming lama TechZ tidak dijalankan; halaman detail dapat menampilkan tautan platform resmi yang tersedia. Tidak ada proxy URL atau unduhan video.
+Original application routes, data providers, extension loader, history and account logic are retained. Defaults: neutral monochrome accent. Build configuration uses Node 22 and npm, with updated Next.js security release. Original bun.lockb is retained as an upstream reference; do not use it with frozen-lockfile.
 
-Lokal: pip install -r requirements.txt; python app.py. Vercel: framework Flask, default build/install settings. Health check: /healthz.
+Vercel: Next.js, npm install, npm run build. OAuth variables in .env.example are optional for guest browsing. No video provider or extension is preinstalled by this modification. Use trusted and authorized providers.
