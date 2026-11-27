@@ -1,4 +1,4 @@
-import { Player } from '@lottiefiles/react-lottie-player';
+import { Player } from '~/components/elements/SafeLottie';
 import { Link } from '@nextui-org/link';
 import { Spacer } from '@nextui-org/spacer';
 import { useMeasure } from '@react-hookz/web';
