@@ -1,93 +1,40 @@
-// refer to https://github.com/vercel/next.js/tree/canary/examples/i18n-routing
-
+import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { i18n } from "./i18n-config";
-import { match as matchLocale } from "@formatjs/intl-localematcher";
-import Negotiator from "negotiator";
-import { CookieLocaleKey, DefaultLocale } from "@/constants/localization";
-import { getRelativeDate } from "@/lib/misc/getRelativeDate";
 
-function getLocale(request: NextRequest): string | undefined {
-    const locales: string[] = i18n.locales;
-    const cookieLocale = request.cookies.get(CookieLocaleKey);
-
-    if (cookieLocale?.value) {
-        let parsedLocale;
-
-        try {
-            parsedLocale = JSON.parse(cookieLocale.value);
-        } catch {
-            parsedLocale = DefaultLocale;
-        }
-
-        if (locales.includes(parsedLocale)) {
-            return parsedLocale;
-        }
-    }
-
-    // Negotiator expects plain object so we need to transform headers
-    const negotiatorHeaders: Record<string, string> = {};
-
-    for (const [key, value] of request.headers.entries()) {
-        negotiatorHeaders[key] = value;
-    }
-
-    // Use negotiator and intl-localematcher to get the best locale
-    const languages = new Negotiator({ headers: negotiatorHeaders }).languages(
-        locales,
-    );
-
-    return matchLocale(languages, locales, i18n.defaultLocale);
-}
-
-export async function middleware(request: NextRequest) {
-    const pathname = request.nextUrl.pathname;
-    const searchParameters = request.nextUrl.searchParams;
-
-    // // `/_next/` and `/api/` are ignored by the watcher, but we need to ignore files in `public` manually.
-    // // If you have one
-    // if (
-    //   [
-    //     '/manifest.json',
-    //     '/favicon.ico',
-    //     // Your other files in `public`
-    //   ].includes(pathname)
-    // )
-    //   return
-
-    // Check if there is any supported locale in the pathname
-    const pathnameIsMissingLocale = i18n.locales.every(
-        (locale) =>
-            !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`,
-    );
-
-    // Redirect if there is no locale
-    if (pathnameIsMissingLocale) {
-        const locale = getLocale(request);
-
-        // e.g. incoming request is /products?react=sucks
-        // The new URL is now /en/products?react=sucks
-        const response = NextResponse.redirect(
-            new URL(
-                `/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}?${searchParameters.toString()}`,
-                request.url,
-            ),
-        );
-
-        response.cookies.set(CookieLocaleKey, JSON.stringify(locale), {
-            httpOnly: false,
-            sameSite: "lax",
-            secure:   process.env.NODE_ENV === "production",
-            expires:  getRelativeDate({ days: 365 }),
-            path:     "/",
-        });
-
-        return response;
-    }
-}
+export const runtime = "nodejs";
 
 export const config = {
-    // Matcher ignoring `/_next/` and `/api/`
-    matcher: ["/((?!api|_next/static|_next/image|robots.txt|.*.webp|.*.jpg|.*.png|reset).*)"],
+  matcher: ["/profile/:path*", "/admin/:path*"],
 };
+
+export default withAuth(
+  async function middleware(req) {
+    // For admin routes, verify the freshest role from the DB so promotion
+    // takes effect without requiring a re-login.
+    if (req.nextUrl.pathname.startsWith("/admin")) {
+      let role: string | undefined = req.nextauth?.token?.role as string | undefined;
+      try {
+        const uid = (req.nextauth?.token?.id as string) || "";
+        const { findUserById } = await import("@/models/user");
+        const fresh = await findUserById(uid);
+        role = fresh?.role ?? role;
+      } catch {
+        // fall back to token role if DB lookup fails
+      }
+      if (role !== "admin") {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+      return NextResponse.next();
+    }
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+    pages: {
+      signIn: "/login",
+    },
+    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+  }
+);

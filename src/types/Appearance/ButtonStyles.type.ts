@@ -1,1 +1,0 @@
-export type ButtonStylesType = "default" | "accent" | "base" | "transparent";
