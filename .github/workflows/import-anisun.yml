@@ -1,0 +1,31 @@
+name: Import verified Anisun source
+on:
+  push:
+    branches: [import-anisun]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Reconstruct and verify the supplied ZIP
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 'https://codeload.github.com/notwindstone/anisun/zip/99a47e013763eb9f306b000ceb3c2df59eade570' -o "$RUNNER_TEMP/anisun.zip"
+          python3 scripts/import_anisun.py "$RUNNER_TEMP/anisun.zip" "$RUNNER_TEMP/verified-anisun"
+      - name: Replace staging branch contents
+        run: |
+          set -euo pipefail
+          git fetch origin refs/heads/anisun-yuuzpime
+          git switch -C anisun-yuuzpime FETCH_HEAD
+          git rm -r --ignore-unmatch .
+          cp -a "$RUNNER_TEMP/verified-anisun/." .
+          git add -A -f
+          test "$(git ls-files | wc -l)" -eq 227
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Import verified YuuZPime Anisun source archive'
+          git push origin HEAD:refs/heads/anisun-yuuzpime
