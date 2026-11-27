@@ -1,4 +1,3 @@
-export { default as supabase } from './client.server';
-export * from './auth.server';
+export * from './guest.server';
 export * from './cookie.server';
-export * from './table.server';
+export type { Database, IHistory, IHistoryDTO } from './table.server';

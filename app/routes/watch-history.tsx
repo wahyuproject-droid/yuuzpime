@@ -88,6 +88,7 @@ const History = () => {
   return (
     <div className="flex w-full flex-col justify-start gap-6 px-3 sm:px-0">
       <h2>Your watch history</h2>
+      <p className="text-default-500">Guest mode: account watch history is unavailable.</p>
       <div className="flex flex-row flex-wrap items-center justify-start gap-6">
         <CheckboxGroup
           label="Select media types"

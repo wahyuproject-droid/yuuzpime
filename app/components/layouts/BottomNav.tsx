@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/indent */
 import { useState } from 'react';
-import { NavLink, useLocation, useSearchParams } from '@remix-run/react';
+import { NavLink } from '@remix-run/react';
 import type { User } from '@supabase/supabase-js';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -12,8 +12,6 @@ import Category from '~/assets/icons/CategoryIcon';
 import Discover from '~/assets/icons/DiscoverIcon';
 import History from '~/assets/icons/HistoryIcon';
 import Home from '~/assets/icons/HomeIcon';
-import LogIn from '~/assets/icons/LogInIcon';
-import LogOut from '~/assets/icons/LogOutIcon';
 import Menu from '~/assets/icons/MenuIcon';
 import Settings from '~/assets/icons/SettingsIcon';
 
@@ -21,12 +19,9 @@ interface IBottomNavProps {
   user?: User | undefined;
 }
 
-const BottomNav = (props: IBottomNavProps) => {
-  const { user } = props;
+const BottomNav = (_props: IBottomNavProps) => {
   const { t } = useTranslation();
   const [openMore, setOpenMore] = useState(false);
-  const location = useLocation();
-  const [search] = useSearchParams();
   const scrollDirection = useLayout((state) => state.scrollDirection);
   const bottomNavItemStyles = tv({
     base: 'flex flex-col items-center justify-center gap-y-2 rounded-small bg-transparent text-xs font-medium text-foreground',
@@ -37,9 +32,6 @@ const BottomNav = (props: IBottomNavProps) => {
       },
     },
   });
-  const ref = (search.get('ref') || location.pathname + location.search)
-    .replace('?', '_0x3F_')
-    .replace('&', '_0x26');
 
   const moreNavItems = [
     {
@@ -52,21 +44,7 @@ const BottomNav = (props: IBottomNavProps) => {
       icon: History,
       path: '/watch-history',
     },
-    ...(user
-      ? [
-          {
-            name: 'logout',
-            icon: LogOut,
-            path: `/sign-out?ref=${ref}`,
-          },
-        ]
-      : [
-          {
-            name: 'login',
-            icon: LogIn,
-            path: `/sign-in?ref=${ref}`,
-          },
-        ]),
+    // Guest mode: no account action.
     {
       name: 'settings',
       icon: Settings,

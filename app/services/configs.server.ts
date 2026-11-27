@@ -35,8 +35,8 @@ interface ISGConfigs {
 }
 
 const sgConfigs: ISGConfigs = {
-  __globalAuthRequired: env.GLOBAL_AUTH_REQUIRED === 'ON',
-  __invitedSignUpOnly: env.INVITED_SIGNUP_ONLY === 'ON',
+  __globalAuthRequired: false,
+  __invitedSignUpOnly: false,
   __invitedSignUpKey: env.INVITED_SIGNUP_KEY || '',
   __loklokProvider: env.LOKLOK_PROVIDER === 'ON',
   __bilibiliProvider: env.BILIBILI_PROVIDER === 'ON',
