@@ -14,7 +14,7 @@
     "format-code": "pnpm run prettier:fix & pnpm run lint:fix",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "lint:fix": "pnpm run lint --fix",
-    "prebuild": "pnpm cleanup",
+    "prebuild": "pnpm run clean",
     "prepare": "husky install",
     "prettier": "prettier app --check",
     "prettier:fix": "prettier app --write",
@@ -22,7 +22,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@consumet/extensions": "github:consumet/consumet.ts",
+    "@consumet/extensions": "1.5.2",
     "@fontsource/sora": "^5.0.14",
     "@lottiefiles/react-lottie-player": "^3.5.3",
     "@nasa-gcn/remix-seo": "^2.0.0",
