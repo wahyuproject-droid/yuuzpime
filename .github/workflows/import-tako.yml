@@ -58,6 +58,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          git add -f android/gradle/wrapper/gradle-wrapper.properties
           if ! git diff --cached --quiet; then
             git commit -m "Import TakoPlay source and apply YuuZPime branding"
             git push origin HEAD:main
@@ -84,6 +85,7 @@ jobs:
         run: |
           if [ ! -f android/gradlew ] || [ ! -f android/gradle/wrapper/gradle-wrapper.jar ]; then
             flutter create --platforms=android --project-name wrapper_template "$RUNNER_TEMP/wrapper_template"
+            mkdir -p android/gradle/wrapper
             cp "$RUNNER_TEMP/wrapper_template/android/gradlew" android/gradlew
             cp "$RUNNER_TEMP/wrapper_template/android/gradlew.bat" android/gradlew.bat
             cp "$RUNNER_TEMP/wrapper_template/android/gradle/wrapper/gradle-wrapper.jar" android/gradle/wrapper/
