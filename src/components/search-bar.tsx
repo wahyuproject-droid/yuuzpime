@@ -20,7 +20,7 @@ const SearchBar = ({
 }) => {
   const [searchValue, setSearchValue] = useState<string>("");
   const [isFocused, setIsFocused] = useState<boolean>(false);
-  const debouncedValue = useDebounce(searchValue, 300);
+  const debouncedValue = useDebounce(searchValue, 550);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
@@ -66,8 +66,8 @@ const SearchBar = ({
     <div ref={containerRef} className={cn(["relative w-full min-h-fit", className])}>
       <SearchIcon suppressHydrationWarning className="absolute inset-y-0 left-2 m-auto h-4 w-4" />
       <Input
-        className="w-full h-10 pl-8 text-white border-white"
-        placeholder="Enter your keywords to search..."
+        className="w-full h-10 pl-8 pr-12 text-white border-white/15"
+        placeholder="Cari anime..."
         onChange={(e) => setSearchValue(e.target.value)}
         onFocus={() => setIsFocused(true)}
         value={searchValue}

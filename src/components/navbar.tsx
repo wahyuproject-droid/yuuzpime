@@ -1,126 +1,39 @@
 "use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
-
-import Container from "./container";
-import { Separator } from "./ui/separator";
-
-import { nightTokyo } from "@/utils/fonts";
-import { ROUTES } from "@/constants/routes";
-import React, { ReactNode, useEffect, useState } from "react";
-
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Home, Search, CalendarDays, History, Settings2, Menu, X, ChevronRight, UserRound } from "lucide-react";
 import SearchBar from "./search-bar";
-import { MenuIcon, X } from "lucide-react";
-import useScrollPosition from "@/hooks/use-scroll-position";
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
-import LoginPopoverButton from "./login-popover-button";
-import { useAuthStore } from "@/store/auth-store";
-import { pb } from "@/lib/pocketbase";
-import NavbarAvatar from "./navbar-avatar";
-import { toast } from "sonner";
 
-const menuItems: Array<{ title: string; href?: string }> = [
-  // {
-  //   title: "Home",
-  //   href: ROUTES.HOME,
-  // },
-  // {
-  //   title: "Catalog",
-  // },
-  // {
-  //   title: "News",
-  // },
-  // {
-  //   title: "Collection",
-  // },
+const links = [
+ {href:"/", label:"Home", icon:Home},
+ {href:"/search", label:"Cari", icon:Search},
+ {href:"/#schedule", label:"Jadwal", icon:CalendarDays},
+ {href:"/history", label:"Riwayat", icon:History},
 ];
-
-const NavBar = () => {
-  const auth = useAuthStore();
-  const { y } = useScrollPosition();
-  const isHeaderSticky = y > 0;
-
-
-  return (
-    <div
-      className={cn([
-        "fixed top-0 left-0 right-0 h-fit w-full z-[100] transition-all duration-300",
-        "backdrop-blur-xl backdrop-saturate-150 border-b",
-        isHeaderSticky
-          ? "bg-slate-950/65 border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]"
-          : "bg-slate-950/35 border-white/5",
-      ])}
-    >
-      <Container className="flex items-center justify-between py-2 gap-3 ">
-        <Link
-          href={ROUTES.HOME}
-          className="flex items-center gap-1 cursor-pointer"
-        >
-          <Image src="/yuuz-logo.svg" alt="logo" width={42} height={42} />
-          <h1
-            className={cn([
-              nightTokyo.className,
-              "text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-200 tracking-widest",
-            ])}
-          >
-            YuuZPime
-          </h1>
-        </Link>
-
-        <div className="hidden lg:flex items-center gap-10 ml-20">
-          {menuItems.map((menu, idx) => (
-            <Link href={menu.href || "#"} key={idx}>
-              {menu.title}
-            </Link>
-          ))}
-        </div>
-        <div className="w-1/3 hidden lg:flex items-center gap-5">
-          <SearchBar />
-          <span className="text-xs text-neutral-400">Guest</span>
-        </div>
-        <div className="lg:hidden flex items-center gap-5">
-          <MobileMenuSheet trigger={<MenuIcon suppressHydrationWarning />} />
-          <span className="text-xs text-neutral-400">Guest</span>
-        </div>
-      </Container>
-    </div>
-  );
-};
-
-const MobileMenuSheet = ({ trigger }: { trigger: ReactNode }) => {
-  const [open, setOpen] = useState<boolean>(false);
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger>{trigger}</SheetTrigger>
-      <SheetContent
-        className="flex flex-col w-[80vw] z-[150]"
-        hideCloseButton
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onCloseAutoFocus={(e) => e.preventDefault()}
-      >
-        <div className="w-full h-full relative">
-          <SheetClose className="absolute top-0 right-0">
-            <X />
-          </SheetClose>
-          <div className="flex flex-col gap-5 mt-10">
-            {menuItems.map((menu, idx) => (
-              <Link
-                href={menu.href || "#"}
-                key={idx}
-                onClick={() => setOpen(false)}
-              >
-                {menu.title}
-              </Link>
-            ))}
-            <Separator />
-            <SearchBar onAnimeClick={() => setOpen(false)} />
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-};
-
-export default NavBar;
+export default function NavBar(){
+ const pathname=usePathname();
+ const [panel,setPanel]=useState<"menu"|"settings"|null>(null);
+ const [reduce,setReduce]=useState(false);
+ useEffect(()=>{try{const value=localStorage.getItem("yuuz-reduce-motion")==="true";setReduce(value);document.documentElement.classList.toggle("yuuz-reduced",value);}catch{}},[]);
+ useEffect(()=>{setPanel(null)},[pathname]);
+ useEffect(()=>{const key=(e:KeyboardEvent)=>{if(e.key==="Escape")setPanel(null)};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key)},[]);
+ function motion(value:boolean){setReduce(value);document.documentElement.classList.toggle("yuuz-reduced",value);try{localStorage.setItem("yuuz-reduce-motion",String(value))}catch{}}
+ return <>
+ <header className="yuuz-top">
+  <div className="yuuz-top-inner">
+   <Link href="/" onClick={()=>setPanel(null)} className="yuuz-brand" aria-label="YuuZPime beranda"><Image src="/yuuz-logo.svg" width={34} height={34} alt=""/><span>YuuZPime</span></Link>
+   <div className="yuuz-search"><SearchBar onAnimeClick={()=>setPanel(null)}/></div>
+   <button type="button" className="yuuz-icon-button" aria-label="Pengaturan" aria-expanded={panel==="settings"} onClick={()=>setPanel(panel==="settings"?null:"settings")}><Settings2 size={18}/></button>
+   <button type="button" className="yuuz-icon-button" aria-label="Menu" aria-expanded={panel==="menu"} onClick={()=>setPanel(panel==="menu"?null:"menu")}>{panel==="menu"?<X size={19}/>:<Menu size={19}/>}</button>
+  </div>
+  {panel&&<><button type="button" className="yuuz-menu-backdrop" aria-label="Tutup menu" onClick={()=>setPanel(null)}/><div className="yuuz-menu" role="dialog" aria-label={panel==="menu"?"Menu":"Pengaturan"}>
+   <div className="flex items-center justify-between pb-3 border-b border-white/10"><strong>{panel==="menu"?"Menu":"Pengaturan"}</strong><button className="yuuz-icon-button" aria-label="Tutup" onClick={()=>setPanel(null)}><X size={18}/></button></div>
+   <div className="flex items-center gap-3 py-4 text-sm"><UserRound size={18}/><div>Mode tamu<p className="text-xs text-neutral-400">Tanpa login</p></div></div>
+   {panel==="menu"?<div className="space-y-1">{links.map(({href,label,icon:Icon})=><Link key={href} href={href} onClick={()=>setPanel(null)} className="yuuz-menu-link"><Icon size={18}/>{label}<ChevronRight className="ml-auto text-neutral-500" size={16}/></Link>)}<button className="yuuz-menu-link w-full" onClick={()=>setPanel("settings")}><Settings2 size={18}/>Pengaturan<ChevronRight className="ml-auto" size={16}/></button></div>:<label className="flex gap-3 items-center justify-between rounded-xl bg-white/5 p-3 text-sm"><span>Kurangi animasi<p className="text-xs text-neutral-400 mt-1">Untuk perangkat yang lebih lambat</p></span><input type="checkbox" checked={reduce} onChange={e=>motion(e.target.checked)} className="h-5 w-5 accent-white"/></label>}
+  </div></>}
+ </header>
+ <nav className="yuuz-dock" aria-label="Navigasi utama">{links.map(({href,label,icon:Icon})=>{const active=href!=="/#schedule"&&(href==="/"?pathname==="/":pathname.startsWith(href));return <Link key={href} href={href} aria-current={active?"page":undefined} className={"yuuz-dock-link"+(active?" active":"")}><Icon size={20} strokeWidth={active?2.5:1.8}/><span>{label}</span></Link>})}</nav>
+ </>
+}

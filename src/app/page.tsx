@@ -94,7 +94,7 @@ export default function Home() {
 
 
 
-      <AnimeSchedule />
+      <section id="schedule" className="scroll-mt-20"><AnimeSchedule /></section>
 
       <AnimeSections
         title="Upcoming Animes"

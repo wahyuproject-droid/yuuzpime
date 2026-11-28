@@ -121,3 +121,32 @@ body {
 .dark {--background:0 0% 6%;--card:0 0% 10%;--popover:0 0% 10%;--secondary:0 0% 15%;--muted:0 0% 15%;--accent:0 0% 18%;--border:0 0% 21%;--input:0 0% 21%;--ring:0 0% 65%;}
 body{background:#101010;color:#f5f5f5}
 @media(max-width:640px){.backdrop-blur-xl,.backdrop-blur-md{backdrop-filter:none!important}.shadow-xl,.shadow-2xl{box-shadow:none!important}}
+
+/* YuuZPime responsive navigation and watch layout */
+html{scroll-padding-top:80px}body{padding-bottom:calc(86px + env(safe-area-inset-bottom));}
+.yuuz-top{position:fixed;inset:0 0 auto;z-index:100;background:rgba(16,16,16,.97);border-bottom:1px solid #ffffff12;}
+.yuuz-top-inner{max-width:1320px;margin:auto;display:flex;align-items:center;gap:10px;min-height:64px;padding:10px 16px;}
+.yuuz-brand{display:flex;align-items:center;gap:8px;flex-shrink:0;font-size:20px;font-weight:800;letter-spacing:-.05em;color:#f8f8f8;}
+.yuuz-search{flex:1;min-width:0;max-width:640px;margin-left:auto;}
+.yuuz-search input{padding-right:42px;border-color:#ffffff16!important;border-radius:12px!important;background:#1a1a1a!important;}
+.yuuz-icon-button{width:40px;height:40px;display:grid;place-items:center;flex:none;border-radius:12px;background:#1b1b1b;border:1px solid #ffffff0d;color:#ddd;cursor:pointer}
+.yuuz-icon-button:hover{background:#292929}
+.yuuz-menu-backdrop{position:fixed;inset:64px 0 0;background:#0008;z-index:1}
+.yuuz-menu{position:absolute;right:16px;top:calc(100% + 8px);width:min(320px,calc(100vw - 32px));z-index:2;padding:16px;border:1px solid #ffffff20;background:#1a1a1a;border-radius:18px;box-shadow:0 12px 35px #0007}
+.yuuz-menu-link{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;font-size:14px;text-align:left}
+.yuuz-menu-link:hover{background:#ffffff0d}
+.yuuz-dock{position:fixed;z-index:90;bottom:calc(10px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 24px));display:flex;gap:5px;padding:6px;border:1px solid #ffffff26;border-radius:23px;background:rgba(27,27,27,.96);box-shadow:0 6px 24px #0006}
+.yuuz-dock-link{display:flex;flex:1;min-width:0;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:9px 3px;border-radius:16px;font-size:10px;color:#aaa;transition:background .18s,color .18s,transform .18s}
+.yuuz-dock-link.active{background:#eee;color:#111;font-weight:700}.yuuz-dock-link:active{transform:scale(.95)}
+.yuuz-watch{max-width:1240px;margin:auto;padding:88px 18px 32px;display:flex;flex-direction:column;gap:16px}
+.yuuz-screen{border:1px solid #ffffff16;overflow:hidden;border-radius:16px;background:#080808;min-width:0}
+.yuuz-unavailable{position:relative;isolation:isolate;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden;min-height:190px;background:#080808}
+.yuuz-screen-bg{position:absolute;inset:0;z-index:-1;width:100%;height:100%;object-fit:cover;opacity:.19}
+.yuuz-screen-message{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px;text-align:center}
+.yuuz-screen-message p{font-size:12px;color:#aaa}.yuuz-play-symbol{display:grid;place-items:center;width:48px;height:48px;border-radius:100%;background:#ffffff12;color:#eee}
+.yuuz-panel{padding:16px;border-radius:16px;border:1px solid #ffffff12;background:#181818;min-width:0}
+.yuuz-episode{display:grid;place-items:center;min-height:40px;border:1px solid #ffffff10;border-radius:10px;background:#242424;color:#ccc;font-size:13px;font-weight:600}.yuuz-episode.active{color:#101010;background:#f2f2f2}
+.yuuz-reduced *, .yuuz-reduced *::before,.yuuz-reduced *::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+@media(min-width:641px){.yuuz-top,.yuuz-dock{backdrop-filter:blur(12px)}}
+@media(max-width:640px){.yuuz-top-inner{gap:7px;padding:9px 12px}.yuuz-brand span{display:none}.yuuz-brand img{width:32px;height:32px}.yuuz-icon-button{width:36px;height:40px}.yuuz-search input{font-size:13px}.yuuz-watch{padding:78px 14px 24px;gap:14px}.yuuz-panel{padding:14px}.yuuz-dock{box-shadow:none}.yuuz-menu{box-shadow:none}.yuuz-screen-message{gap:6px}}
+@media(prefers-reduced-motion:reduce){.yuuz-dock-link{transition:none}.yuuz-screen-message .animate-spin{animation:none}}

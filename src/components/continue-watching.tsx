@@ -91,7 +91,7 @@ const ContinueWatching = (props: Props) => {
                   title={ani.name}
                   poster={ani.poster}
                   className="self-center justify-self-center"
-                  href={`${ROUTES.WATCH}?anime=${ani.id}&ep=${typeof ani.episode !== "string" ? ani.episode.episodeNumber : 1}`}
+                  href={`${ROUTES.WATCH}?anime=${ani.id}&ep=${typeof ani.episode !== "string" ? ani.episode.episodeNumber : encodeURIComponent(ani.episode)}`}
                   watchDetail={
                     typeof ani.episode !== "string" ? ani.episode : null
                   }

@@ -2,6 +2,7 @@
 const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  devIndicators: false,
   serverExternalPackages: ["wreq-js"],
   images: {
     remotePatterns: [
