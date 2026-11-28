@@ -23,15 +23,16 @@ for name in ['index.html','vite.config.ts']:
 (root/'public/yuuz-logo.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108"><rect width="108" height="108" rx="22" fill="#101010"/><path fill="#fff" d="M22 25H37L54 48 71 25H86L61 60V83H47V60Z"/></svg>')
 (root/'public/LICENSE.txt').write_bytes(files['LICENSE'])
 pkg=json.loads((root/'package.json').read_text())
-keep=['react','react-dom','@radix-ui/react-slot','@radix-ui/react-icons','class-variance-authority','clsx','tailwind-merge','embla-carousel-react','lucide-react','tailwindcss-animate']
+keep=['react','react-dom','@radix-ui/react-slot','@radix-ui/react-icons','class-variance-authority','clsx','tailwind-merge','embla-carousel-react','lucide-react','tailwindcss-animate','@radix-ui/react-tabs','react-query']
 pkg={'name':'yuuzpime-miru-bundle','version':'3.0.0','private':True,'scripts':{'build':'vite build'},'dependencies':{k:pkg['dependencies'][k] for k in keep},'devDependencies':{'vite':'6.4.1','typescript':'^5','tailwindcss':'^3.4.1','postcss':'^8'}}
 (root/'package.json').write_text(json.dumps(pkg))
 (root/'package-lock.json').unlink(missing_ok=True)
 tailwind=root/'tailwind.config.ts'
 tailwind.write_text(tailwind.read_text().replace('content: [','content: [\n        "./src/android-main.tsx",'))
-for p in ['src/components/hero-section.tsx','src/components/anime-card.tsx','src/components/anime-sections.tsx','src/components/featured-collection.tsx','src/components/featured-collection-card.tsx']:
+for p in ['src/components/hero-section.tsx','src/components/anime-card.tsx','src/components/anime-sections.tsx','src/components/featured-collection.tsx','src/components/featured-collection-card.tsx','src/components/anime-schedule.tsx','src/components/common/character-card.tsx']:
     f=root/p
     s=f.read_text()
+    s=s.replace('h-[85vh] min-h-[580px] max-h-[860px]', 'mobile-hero h-[85vh] min-h-[580px] max-h-[860px]').replace('h-[85vh] min-h-[580px] bg', 'mobile-hero h-[85vh] min-h-[580px] bg')
     s=s.replace('Stream this breathtaking title on Miru with zero ad interruptions and crisp playback.','Explore anime on YuuZPime.').replace('Watch Now','Details & official sources').replace('HD 1080P','ANIME').replace('#07090e','#101010').replace('#0d121d','#1b1b1b')
     # No heavy colored glow in the Android skin.
     s=re.sub(r'(indigo|violet|cyan|blue|slate)-([0-9]+)',r'neutral-\2',s)
@@ -39,5 +40,9 @@ for p in ['src/components/hero-section.tsx','src/components/anime-card.tsx','src
 # Network timeout for the upstream catalog.
 f=root/'src/lib/anilist.ts'
 s=f.read_text().replace('method: "POST",','method: "POST",\n    signal: AbortSignal.timeout(12000),',1)
+# Filter adult and explicitly erotic results before schedule mapping.
+s=s.replace('const scheduledAnimes = schedules.map((item: any) => {','const scheduledAnimes = schedules.filter((item: any) => item.media?.isAdult === false && !item.media?.genres?.some((g: string) => ["Hentai","Erotica","Ecchi"].includes(g))).map((item: any) => {')
 f.write_text(s)
+# Use original schedule UI with local AniList query, not upstream account/video service.
+(root/'src/query/get-anime-schedule.ts').write_text('import { useQuery } from "react-query";\nimport { getAniListAnimeSchedule } from "@/lib/anilist";\nexport const useGetAnimeSchedule = (date?: string) => useQuery(["schedule", date], () => getAniListAnimeSchedule(date), {staleTime: 300000,retry:false});\n')
 print('Verified original Miru source; original UI modules compiled into Android assets.')

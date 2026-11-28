@@ -56,10 +56,22 @@ jobs:
           "$BT/apksigner" verify --verbose --print-certs dist/YuuZPime.apk
           "$BT/aapt" dump badging dist/YuuZPime.apk
           sha256sum dist/YuuZPime.apk > dist/YuuZPime.apk.sha256
+      - name: Package complete source for editing
+        run: |
+          set -euo pipefail
+          mkdir -p dist/source-project/miru-original
+          unzip -q "$RUNNER_TEMP/miru.zip" -d dist/source-project/miru-original
+          cp -a mobile android dist/source-project/
+          rm -rf dist/source-project/android/assets
+          mkdir -p dist/source-project/.github/workflows
+          cp .github/workflows/android-apk.yml dist/source-project/.github/workflows/
+          cp "$RUNNER_TEMP/miru.zip" dist/source-project/miru-web-main.zip
+          (cd dist/source-project && zip -q -r ../YuuZPime-full-source.zip .)
+          unzip -tq dist/YuuZPime-full-source.zip
       - name: Publish Android release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="miru-v3.0.${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/YuuZPime.apk dist/YuuZPime.apk.sha256 --target "$GITHUB_SHA" --title "YuuZPime Android $TAG" --notes "Bundled original Miru React UI and AniList catalog, adapted to local Android assets. No Vercel URL or cloud login. Requires internet for online catalog and official provider links. Integrated third-party streaming is not enabled. Temporary signing key."
+          TAG="miru-v3.1.${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/YuuZPime.apk dist/YuuZPime.apk.sha256 dist/YuuZPime-full-source.zip --target "$GITHUB_SHA" --title "YuuZPime Android $TAG" --notes "Bundled Miru React UI, weekly schedule, character details and AniList catalog, adapted to local Android assets. Complete unmodified original source included in separate source ZIP along with Android build adapters. No Vercel URL or cloud login. Requires internet for online catalog and official provider links. Integrated third-party streaming is not enabled. Temporary signing key."
