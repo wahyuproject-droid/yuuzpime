@@ -43,7 +43,7 @@ jobs:
           p=Path("android/settings.gradle.kts")
           p.write_text(p.read_text().replace('version "9.1.0"', 'version "9.1.1"'))
           p=Path("android/app/build.gradle.kts")
-          p.write_text(p.read_text().replace('applicationId = "com.kaungsatthein.takoplay"','applicationId = "com.yuuzstudio.yuuzpime"'))
+          p.write_text(p.read_text().replace('applicationId = "com.kaungsatthein.takoplay"','applicationId = "com.yuuzstudio.yuuzpime"').replace('VERSION_17','VERSION_21').replace('JVM_17','JVM_21'))
           p=Path("lib/utils/constants.dart")
           s=p.read_text().replace("https://api.github.com/repos/kaungsatthe1n/Tako-Play/releases/latest","https://api.github.com/repos/wahyuproject-droid/yuuzpime/releases/tags/yuuzpime-tako-v1.9.1").replace("const String version = 'v1.9.1';","const String version = 'yuuzpime-tako-v1.9.1';")
           p.write_text(s)
@@ -79,7 +79,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
