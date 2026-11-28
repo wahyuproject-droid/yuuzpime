@@ -33,6 +33,7 @@ public final class MainActivity extends Activity {
     private View videoView;
     private WebChromeClient.CustomViewCallback videoCallback;
     private boolean mainError;
+    private android.webkit.ValueCallback<Uri[]> fileCallback;
     private int insetLeft, insetTop, insetRight, insetBottom;
 
     private int dp(float value) {
@@ -66,7 +67,7 @@ public final class MainActivity extends Activity {
         settings.setDomStorageEnabled(true);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setAllowFileAccess(false);
-        settings.setAllowContentAccess(false);
+        settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setSupportMultipleWindows(false);
@@ -134,6 +135,10 @@ public final class MainActivity extends Activity {
             }
         });
         web.setWebChromeClient(new WebChromeClient(){
+            @Override public boolean onShowFileChooser(WebView v, android.webkit.ValueCallback<Uri[]> callback, FileChooserParams params) {
+                if(fileCallback!=null)fileCallback.onReceiveValue(null);fileCallback=callback;
+                try { startActivityForResult(params.createIntent(),4141);return true; } catch(Exception e){fileCallback.onReceiveValue(null);fileCallback=null;return false;}
+            }
             @Override public void onProgressChanged(WebView v,int n) { progress.setProgress(n); progress.setVisibility(n>=100 || mainError?View.GONE:View.VISIBLE); }
             @Override public void onShowCustomView(View view,CustomViewCallback callback) {
                 if(videoView!=null){callback.onCustomViewHidden();return;}
@@ -149,6 +154,7 @@ public final class MainActivity extends Activity {
         if(state==null || web.restoreState(state)==null) web.loadUrl(HOME);
     }
 
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){super.onActivityResult(requestCode,resultCode,data);if(requestCode==4141&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode,data));fileCallback=null;}}
     private void showError(){mainError=true;progress.setVisibility(View.GONE);errorPanel.setVisibility(View.VISIBLE);}
     private void hideVideo(){
         if(videoView==null)return;

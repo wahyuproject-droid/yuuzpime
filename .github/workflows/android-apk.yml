@@ -73,5 +73,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="kitsune-v4.0.${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/YuuZPime.apk dist/YuuZPime.apk.sha256 dist/YuuZPime-full-source.zip --target "$GITHUB_SHA" --title "YuuZPime Android $TAG" --notes "Kitsune original UI components and browser-adapted AniList catalog. Includes full verified 214-file original source ZIP and Android build adapters. No login or Vercel dependency. Unverified external streaming and Companion are not enabled. Temporary signing key."
+          TAG="kitsune-v4.1.${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/YuuZPime.apk dist/YuuZPime.apk.sha256 dist/YuuZPime-full-source.zip --target "$GITHUB_SHA" --title "YuuZPime Android $TAG" --notes "Kitsune original detail layout and UI components, browser-adapted AniList catalog and ArtPlayer for authorized local or HTTPS media. Includes full verified 214-file original source ZIP and Android build adapters. No login or Vercel dependency. Unverified external streaming and Companion are not enabled. Temporary signing key."
