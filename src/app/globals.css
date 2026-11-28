@@ -270,3 +270,11 @@
 [data-theme="light"] .text-orange-300,
 [data-theme="light"] .text-orange-400,
 [data-theme="light"] .text-orange-500 { color: #404040; }
+
+/* Lightweight rendering for manga cards and small screens. */
+.manga-lite-card { content-visibility: auto; contain-intrinsic-size: auto 260px; }
+@media (max-width: 640px) {
+  .tech-grid-background { background-image: none; }
+  .manga-lite { overflow-x: clip; }
+  .manga-lite *, .manga-lite *::before, .manga-lite *::after { animation: none !important; transition: none !important; }
+}
