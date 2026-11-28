@@ -5,6 +5,7 @@ import {useSearchParams} from "next/navigation";
 import Link from "next/link";
 import {ArrowLeft,ChevronLeft,ChevronRight,Play,RefreshCw,ExternalLink,Film} from "lucide-react";
 import {useGetAnimeDetails} from "@/query/get-anime-details";
+import {useGetAllEpisodes} from "@/query/get-all-episodes";
 import type {IEpisodeSource,IEpisodeServers} from "@/types/episodes";
 import type Artplayer from "artplayer";
 const KitsunePlayer=dynamic(()=>import("@/components/kitsune-player"),{ssr:false});
@@ -35,7 +36,8 @@ function Watch(){
  const p=useSearchParams(),id=p.get("anime")||"",ep=Math.max(1,Math.min(10000,Math.floor(Number(p.get("ep")||p.get("episode"))||1)));
  const {data}=useGetAnimeDetails(/^\d+$/.test(id)?id:"");
  const info=data?.anime?.info,title=info?.name||"Watch";
- const total=Math.min(10000,Math.max(0,Number(info?.stats?.episodes?.sub)||0));
+ const {data:episodeData,isLoading:episodeLoading,isError:episodeError}=useGetAllEpisodes(id);
+ const total=episodeData?.totalEpisodes ?? 0;
  const [media,setMedia]=useState<MediaSource|null>(null),[links,setLinks]=useState<Provider[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[reload,setReload]=useState(0),[autoSkip,setAutoSkip]=useState(false),[range,setRange]=useState(Math.floor((ep-1)/50));
  const key="yuuzpime-watch:"+id+":"+ep;
  useEffect(()=>{setRange(Math.floor((ep-1)/50))},[ep]);
@@ -69,8 +71,8 @@ function Watch(){
  </div>
  <aside className="yuuz-panel self-start space-y-4"><div className="flex items-center justify-between"><h2 className="flex items-center gap-2 font-bold"><Film size={18}/> Episodes</h2><span className="text-xs text-neutral-400">{total||"—"}</span></div>
  {total>50&&<select className="w-full rounded-xl border border-white/10 bg-[#1b1b1b] p-2 text-sm" aria-label="Rentang episode" value={Math.min(range,Math.ceil(total/50)-1)} onChange={e=>setRange(Number(e.target.value))}>{Array.from({length:Math.ceil(total/50)},(_,i)=><option key={i} value={i}>{i*50+1}–{Math.min(total,(i+1)*50)}</option>)}</select>}
- {total>0?<div className="grid grid-cols-5 gap-2">{Array.from({length:Math.max(0,Math.min(50,total-range*50))},(_,i)=>range*50+i+1).map(n=><Link key={n} href={href(n)} aria-current={n===ep?"page":undefined} className={"yuuz-episode"+(n===ep?" active":"")}>{n}</Link>)}</div>:<p className="text-sm text-neutral-400">Jumlah episode belum diketahui.</p>}
- <p className="text-xs text-neutral-500">Nomor episode mengikuti katalog, bukan jaminan video tersedia.</p></aside></div>
+ {total>0?<div className="grid grid-cols-5 gap-2">{Array.from({length:Math.max(0,Math.min(50,total-range*50))},(_,i)=>range*50+i+1).map(n=><Link key={n} href={href(n)} aria-current={n===ep?"page":undefined} className={"yuuz-episode"+(n===ep?" active":"")}>{n}</Link>)}</div>:<p className="text-sm text-neutral-400">{episodeLoading?"Memuat daftar episode…":episodeError?"Katalog episode sedang tidak tersedia.":"Belum ada episode tayang yang tercatat."}</p>}
+ <p className="text-xs text-neutral-500">{episodeData?.announcedEpisodes ? "Total diumumkan: "+episodeData.announcedEpisodes+". " : ""}Nomor episode mengikuti metadata AniList, bukan jaminan video tersedia.</p></aside></div>
  </section>
 }
 export default function Page(){return <Suspense fallback={<section className="yuuz-watch text-neutral-400">Memuat Watch…</section>}><Watch/></Suspense>}
