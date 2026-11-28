@@ -1,0 +1,3 @@
+# Licensed online episodes
+
+Set GitHub repository variable `LICENSED_CATALOG_URL` to an HTTPS JSON manifest provided by a rights-authorized distributor (CORS must permit the app). Alternatively populate `mobile/licensed-episodes.json` before building. Schema: `series` maps AniList IDs to `episodes`, which maps episode numbers to objects with `url`, `type` (`mp4` or `m3u8`), optional `subtitle`, `introEnd` and `outroStart`. The manifest shipped by default is empty; no streams or availability are fabricated. Official links reported by AniList appear automatically. The app does not proxy protected or third-party media.

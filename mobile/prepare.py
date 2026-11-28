@@ -12,11 +12,12 @@ for p,b in files.items():
     dest.parent.mkdir(parents=True,exist_ok=True)
     dest.write_bytes(b)
 mobile=pathlib.Path(__file__).resolve().parent
-for name in ['android-main.tsx','android-link.tsx','android-image.tsx','mobile.css','android-navigation.ts','android-watch.tsx']:
+for name in ['android-main.tsx','android-link.tsx','android-image.tsx','mobile.css','android-navigation.ts','android-watch.tsx','android-online.ts']:
     shutil.copyfile(mobile/name,root/'src'/name)
 for name in ['index.html','vite.config.ts']:
     shutil.copyfile(mobile/name,root/name)
 shutil.copyfile(mobile/'android-anilist.ts',root/'src/lib/android-anilist.ts')
+shutil.copyfile(mobile/'licensed-episodes.json',root/'public/licensed-episodes.json')
 original=files['src/lib/anilist.ts'].decode()
 fragment=original[original.index('const MEDIA_LIST_FRAGMENT ='):original.index('export async function anilistQuery')]
 normalizer=original[original.index('export function normalizeMediaList'):original.index('export async function fetchSpotlight')]

@@ -4,16 +4,26 @@ import Hls from 'hls.js';
 import {useSearchParams} from 'next/navigation';
 import {useGetAnimeDetails} from '@/query/get-anime-details';
 import Container from '@/components/container';
-import {ArrowLeft,FolderOpen,Play,Subtitles} from 'lucide-react';
+import {ArrowLeft,Play,ExternalLink,RefreshCw} from 'lucide-react';
+import {getLicensedEpisode, getOfficialLinks, type OfficialLink} from './android-online';
 import Link from 'next/link';
 
 export default function LocalWatch(){
  const p=useSearchParams(),id=p.get('anime')||'',ep=Math.max(1,Number(p.get('ep')||p.get('episode'))||1);
  const {data}=useGetAnimeDetails(id),info=data?.anime?.info;
- const target=useRef<HTMLDivElement>(null),[media,setMedia]=useState(''),[format,setFormat]=useState('mp4'),[sub,setSub]=useState(''),[input,setInput]=useState(''),[notice,setNotice]=useState(''),[intro,setIntro]=useState(0),[outro,setOutro]=useState(0),[skip,setSkip]=useState(false);
+ const target=useRef<HTMLDivElement>(null),[media,setMedia]=useState(''),[format,setFormat]=useState('mp4'),[sub,setSub]=useState(''),[notice,setNotice]=useState(''),[intro,setIntro]=useState(0),[outro,setOutro]=useState(0),[skip,setSkip]=useState(false),[links,setLinks]=useState<OfficialLink[]>([]),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0);
  const key='yuuzpime-progress:'+id+':'+ep;
- useEffect(()=>()=>{if(media.startsWith('blob:'))URL.revokeObjectURL(media);},[media]);
- useEffect(()=>()=>{if(sub.startsWith('blob:'))URL.revokeObjectURL(sub);},[sub]);
+ useEffect(()=>{
+ let live=true;setLoading(true);setNotice('');setMedia('');setSub('');setLinks([]);setIntro(0);setOutro(0);setSkip(false);
+ Promise.allSettled([getLicensedEpisode(id,ep),getOfficialLinks(id,ep)]).then(([stream,official])=>{
+   if(!live)return;
+   if(official.status==='fulfilled')setLinks(official.value);
+   if(stream.status==='fulfilled'&&stream.value){const s=stream.value;setFormat(s.type);setSub(s.subtitle||'');setIntro(s.introEnd||0);setOutro(s.outroStart||0);setMedia(s.url);}
+   else if(stream.status==='rejected')setNotice('Katalog streaming tidak dapat dimuat.');
+   setLoading(false);
+ });
+ return()=>{live=false};
+ },[id,ep,retry]);
  useEffect(()=>{
  if(!target.current||!media)return;let hls:Hls|null=null;
  let art:Artplayer;
@@ -26,7 +36,15 @@ export default function LocalWatch(){
  }catch{setNotice('Player gagal dimuat.');}
  return()=>{hls?.destroy();art?.destroy(false);};
  },[media,format,sub,key,intro,outro,skip]);
- const load=()=>{try{const u=new URL(input.trim());if(u.protocol!=='https:'||u.username||u.password||!(/\.(mp4|m3u8|webm)$/i.test(u.pathname)))throw Error();setMedia(u.href);setFormat(u.pathname.endsWith('.m3u8')?'m3u8':'mp4');setNotice('');}catch{setNotice('Pilih URL HTTPS MP4, WebM, atau HLS berizin.');}};
- const field='w-full rounded-xl border border-white/15 bg-neutral-900 px-3 py-3 text-sm';
- return <Container className="py-5 space-y-4"><Link href={'/anime/'+id} className="flex items-center gap-2 text-neutral-400"><ArrowLeft size={16}/> Detail anime</Link><h1 className="text-xl font-bold">{info?.name||'YuuZPime Watch'}</h1><div className="overflow-hidden rounded-2xl bg-black border border-white/10"><div ref={target} className={'aspect-video w-full '+(!media?'hidden':'')}/>{!media&&<div className="aspect-video relative grid place-items-center overflow-hidden">{info?.poster&&<img src={info.poster} className="absolute w-full h-full object-cover opacity-25" alt=""/>}<div className="relative text-center"><Play className="mx-auto mb-2" size={30}/><p>Episode {ep}</p><p className="text-xs text-neutral-400">Pilih sumber video berizin</p></div></div>}</div><div className="flex justify-between items-center"><Link href={'/anime/watch?anime='+id+'&ep='+Math.max(1,ep-1)} className="rounded-xl bg-neutral-800 p-3 text-xs">Prev</Link><strong>EP {ep}</strong><Link href={'/anime/watch?anime='+id+'&ep='+(ep+1)} className="rounded-xl bg-neutral-800 p-3 text-xs">Next</Link></div>{notice&&<p className="text-sm text-neutral-300">{notice}</p>}<section className="rounded-2xl border border-white/10 bg-neutral-900/70 p-4 space-y-3"><h2 className="font-bold">Sumber video</h2><label className="block text-xs text-neutral-300"><FolderOpen size={16} className="inline mr-2"/>Video lokal<input type="file" accept="video/mp4,video/webm" className={field} onChange={e=>{const f=e.target.files?.[0];if(f){setFormat('mp4');setMedia(URL.createObjectURL(f));setNotice('');}}}/></label><form onSubmit={e=>{e.preventDefault();load()}} className="space-y-2"><input className={field} placeholder="URL video HTTPS berizin" value={input} onChange={e=>setInput(e.target.value)}/><button className="w-full rounded-xl bg-white text-black font-bold p-3">Putar video</button></form><label className="block text-xs"><Subtitles size={16} className="inline mr-2"/>Subtitle VTT lokal<input className={field} type="file" accept=".vtt,text/vtt" onChange={e=>{const f=e.target.files?.[0];if(f)setSub(URL.createObjectURL(f));}}/></label><details><summary className="text-sm">Auto skip intro/outro</summary><label className="flex gap-2 items-center text-xs mt-3"><input type="checkbox" checked={skip} onChange={e=>setSkip(e.target.checked)}/>Aktifkan</label><div className="grid grid-cols-2 gap-2 mt-3"><label className="text-xs">Akhir intro (detik)<input type="number" min="0" className={field} value={intro} onChange={e=>setIntro(Math.max(0,Number(e.target.value)||0))}/></label><label className="text-xs">Awal outro (detik)<input type="number" min="0" className={field} value={outro} onChange={e=>setOutro(Math.max(0,Number(e.target.value)||0))}/></label></div></details></section></Container>
+ return <Container className="py-5 space-y-4">
+ <Link href={'/anime/'+id} className="flex items-center gap-2 text-neutral-400"><ArrowLeft size={16}/> Detail anime</Link>
+ <h1 className="text-xl font-bold">{info?.name||'YuuZPime Watch'}</h1>
+ <div className="overflow-hidden rounded-2xl bg-black border border-white/10"><div ref={target} className={'aspect-video w-full '+(!media?'hidden':'')}/>{!media&&<div className="aspect-video relative grid place-items-center overflow-hidden">{info?.poster&&<img src={info.poster} className="absolute w-full h-full object-cover opacity-25" alt=""/>}<div className="relative text-center px-4"><Play className="mx-auto mb-2" size={30}/><p>Episode {ep}</p><p className="text-xs text-neutral-400">{loading?'Mencari sumber online…':links.length?'Tersedia melalui penyedia resmi di bawah':'Belum tersedia dari katalog streaming berizin'}</p></div></div>}</div>
+ <div className="flex justify-between items-center"><Link href={'/anime/watch?anime='+id+'&ep='+Math.max(1,ep-1)} className="rounded-xl bg-neutral-800 p-3 text-xs">Prev</Link><strong>EP {ep}</strong><Link href={'/anime/watch?anime='+id+'&ep='+(ep+1)} className="rounded-xl bg-neutral-800 p-3 text-xs">Next</Link></div>
+ {notice&&<p role="alert" className="text-sm text-neutral-300">{notice}</p>}
+ {media&&<label className="flex gap-2 items-center text-sm"><input type="checkbox" checked={skip} onChange={e=>setSkip(e.target.checked)}/> Auto skip intro/outro (jika tersedia)</label>}
+ <section className="rounded-2xl border border-white/10 bg-neutral-900/70 p-4 space-y-3"><div className="flex justify-between items-center"><h2 className="font-bold">Sumber online</h2><button type="button" disabled={loading} onClick={()=>setRetry(x=>x+1)} aria-label="Muat ulang"><RefreshCw size={17}/></button></div>
+ {loading?<p className="text-xs text-neutral-400">Mencari episode…</p>:media?<p className="text-sm">Sumber streaming terhubung.</p>:!links.length?<p className="text-sm text-neutral-400">Belum ada sumber yang tersedia untuk episode ini.</p>:links.map(x=><a key={x.url} href={x.url} className="flex justify-between items-center rounded-xl border border-white/15 px-4 py-3 text-sm"><span>{x.site}<span className="block text-xs text-neutral-400">{x.title}</span></span><ExternalLink size={16}/></a>)}
+ {!media&&links.length>0&&<p className="text-xs text-neutral-400">Tautan dibuka di penyedia resmi. Ketersediaan dan langganan mengikuti penyedia.</p>}
+ </section></Container>
 }
