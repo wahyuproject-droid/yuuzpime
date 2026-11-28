@@ -25,7 +25,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 public final class MainActivity extends Activity {
-    private static final String HOME = "https://yuuzpime.vercel.app/";
+    private static final String HOME = "https://appassets.androidplatform.net/index.html";
     private FrameLayout root, fullscreen;
     private WebView web;
     private LinearLayout errorPanel;
@@ -89,7 +89,7 @@ public final class MainActivity extends Activity {
         title.setText("YuuZPime"); title.setTextSize(28); title.setTextColor(Color.WHITE);
         errorPanel.addView(title);
         TextView message = new TextView(this);
-        message.setText("Situs belum dapat dimuat. Periksa internet atau status server.");
+        message.setText("Aset aplikasi tidak dapat dimuat. Coba buka ulang aplikasi.");
         message.setTextColor(Color.LTGRAY); message.setGravity(Gravity.CENTER);
         message.setPadding(0,dp(12),0,dp(20));
         errorPanel.addView(message);
@@ -101,10 +101,19 @@ public final class MainActivity extends Activity {
         errorPanel.setVisibility(View.GONE);
 
         web.setWebViewClient(new WebViewClient() {
+            @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                Uri u=request.getUrl();
+                if (!"https".equals(u.getScheme()) || !"appassets.androidplatform.net".equals(u.getHost())) return null;
+                String p=u.getPath(); if(p==null||p.equals("/"))p="/index.html";
+                if(p.contains("..")||p.contains("\\")) return new WebResourceResponse("text/plain","UTF-8",404,"Not Found",java.util.Collections.emptyMap(),new java.io.ByteArrayInputStream(new byte[0]));
+                String mime=p.endsWith(".js")?"application/javascript":p.endsWith(".css")?"text/css":p.endsWith(".html")?"text/html":p.endsWith(".svg")?"image/svg+xml":p.endsWith(".png")?"image/png":p.endsWith(".woff")?"font/woff":p.endsWith(".woff2")?"font/woff2":"application/octet-stream";
+                try{return new WebResourceResponse(mime,mime.startsWith("text/")||mime.equals("application/javascript")?"UTF-8":null,getAssets().open("miru"+p));}
+                catch(java.io.IOException e){return new WebResourceResponse("text/plain","UTF-8",404,"Not Found",java.util.Collections.emptyMap(),new java.io.ByteArrayInputStream(new byte[0]));}
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 if (!request.isForMainFrame()) return false;
                 Uri uri=request.getUrl();
-                if ("https".equalsIgnoreCase(uri.getScheme()) && "yuuzpime.vercel.app".equalsIgnoreCase(uri.getHost())) return false;
+                if ("https".equalsIgnoreCase(uri.getScheme()) && "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost())) return false;
                 if ("https".equalsIgnoreCase(uri.getScheme()) && request.hasGesture()) {
                     try { startActivity(new Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)); } catch (Exception ignored) {}
                 }
