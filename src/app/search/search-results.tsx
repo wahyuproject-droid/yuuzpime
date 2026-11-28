@@ -115,7 +115,7 @@ const SearchResults = () => {
 
   return (
     <div className="flex flex-col gap-10 mt-28 lg:mt-36 pb-20 min-h-[75vh]">
-      <div className="bg-slate-800/50 backdrop-blur-md border border-white/10 rounded-lg p-5 flex flex-col gap-5">
+      <div className="bg-neutral-800/50 backdrop-blur-md border border-white/10 rounded-lg p-5 flex flex-col gap-5">
         <p className="text-lg font-semibold">Filters</p>
         <div className="flex flex-wrap gap-3">
           <Select
@@ -171,11 +171,11 @@ const SearchResults = () => {
                 key={genre.value}
                 size="sm"
                 className={cn(
-                  "border border-slate-700 hover:border-[#e9376b] hover:text-[#e9376b] hover:bg-transparent",
-                  "data-[state=on]:border-[#e9376b] data-[state=on]:text-white data-[state=on]:bg-[#e9376b]",
+                  "border border-neutral-700 hover:border-[#454545] hover:text-[#454545] hover:bg-transparent",
+                  "data-[state=on]:border-[#454545] data-[state=on]:text-white data-[state=on]:bg-[#454545]",
                   filters.genres?.split(",").includes(genre.value)
-                    ? "bg-[#e9376b] text-white"
-                    : "text-slate-300",
+                    ? "bg-[#454545] text-white"
+                    : "text-neutral-300",
                 )}
               >
                 {genre.label}
@@ -186,7 +186,7 @@ const SearchResults = () => {
         <div className="flex items-center gap-2 mt-4">
           <Button
             size="sm"
-            className="w-[6.25rem] hover:bg-[#e9376b] bg-[#e9376b] text-white"
+            className="w-[6.25rem] hover:bg-[#454545] bg-[#454545] text-white"
             onClick={applyFilters}
           >
             Filter
@@ -217,7 +217,7 @@ const SearchResults = () => {
             return (
               <div
                 key={idx}
-                className="rounded-xl h-[15.625rem] min-w-[10.625rem] max-w-[12.625rem] md:h-[18.75rem] md:max-w-[12.5rem] animate-pulse bg-slate-700"
+                className="rounded-xl h-[15.625rem] min-w-[10.625rem] max-w-[12.625rem] md:h-[18.75rem] md:max-w-[12.5rem] animate-pulse bg-neutral-700"
               ></div>
             );
           })}

@@ -23,7 +23,7 @@ const geistSans = localFont({
 
 const APP_NAME = "YuuZPime";
 const APP_DEFAULT_TITLE = "YuuZPime | Anime";
-const APP_DESCRIPTION = "Stream your favourite anime with ease and no ads";
+const APP_DESCRIPTION = "Jelajahi katalog anime, jadwal tayang, dan koleksi YuuZPime.";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
@@ -57,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="id" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/yuuz-logo.svg" type="image/svg+xml" />
       </head>

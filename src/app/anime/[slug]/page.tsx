@@ -125,7 +125,7 @@ const Page = () => {
         <WatchTrailer
           videoHref={anime.anime.info.promotionalVideos[0]?.source}
         />
-        <div className="absolute h-full w-full inset-0 m-auto bg-gradient-to-r from-slate-900 to-transparent"></div>
+        <div className="absolute h-full w-full inset-0 m-auto bg-gradient-to-r from-neutral-900 to-transparent"></div>
       </div>
       <Container className="z-50 md:space-y-10 pb-20">
         <div className="flex md:mt-[-9.375rem] mt-[-6.25rem] md:flex-row flex-col md:items-end md:gap-20 gap-10 ">

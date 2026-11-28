@@ -78,7 +78,7 @@ const AnimeCard = ({
               )}
               <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                 {props.episodeCard && !!props.episodes && (
-                  <Badge className="bg-[#e9376b] text-white text-[10px] px-1.5 py-0.5">
+                  <Badge className="bg-[#454545] text-white text-[10px] px-1.5 py-0.5">
                     Ep {props.episodes}
                   </Badge>
                 )}

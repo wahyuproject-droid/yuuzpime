@@ -45,13 +45,13 @@ const HeroSection = (props: IHeroSectionProps) => {
           onClick={() => {
             api?.scrollPrev();
           }}
-          className="rounded-full bg-transparent border border-white h-10 w-10 hover:bg-slate-500"
+          className="rounded-full bg-transparent border border-white h-10 w-10 hover:bg-neutral-500"
         >
           <ArrowLeft className="text-white shrink-0" />
         </Button>
         <Button
           onClick={() => api?.scrollNext()}
-          className="rounded-full bg-transparent border border-white h-10 w-10 hover:bg-slate-500"
+          className="rounded-full bg-transparent border border-white h-10 w-10 hover:bg-neutral-500"
         >
           <ArrowRight className="text-white shrink-0" />
         </Button>
@@ -75,8 +75,8 @@ const HeroCarouselItem = ({ anime }: { anime: MediaList }) => {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       {/* Gradient Overlay */}
-      <div className="absolute h-full w-full inset-0 m-auto bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent z-10"></div>
-      <div className="absolute h-full w-full inset-0 m-auto bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-10"></div>
+      <div className="absolute h-full w-full inset-0 m-auto bg-gradient-to-r from-neutral-900 via-neutral-900/80 to-transparent z-10"></div>
+      <div className="absolute h-full w-full inset-0 m-auto bg-gradient-to-t from-neutral-900 via-neutral-900/40 to-transparent z-10"></div>
 
       {/* Content Section */}
       <div className="w-full h-[calc(100%-5.25rem)] relative z-20">
@@ -88,7 +88,7 @@ const HeroCarouselItem = ({ anime }: { anime: MediaList }) => {
 
             <div className="flex flex-wrap items-center gap-2 text-xs">
               {anime.format && (
-                <Badge className="bg-[#e9376b] text-white font-bold">
+                <Badge className="bg-[#454545] text-white font-bold">
                   {anime.format}
                 </Badge>
               )}
@@ -112,7 +112,7 @@ const HeroCarouselItem = ({ anime }: { anime: MediaList }) => {
             <div className="flex items-center gap-5 !mt-6">
               <ButtonLink
                 href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}
-                className="h-10 text-md bg-[#e9376b] text-white hover:bg-[#e9376b]"
+                className="h-10 text-md bg-[#454545] text-white hover:bg-[#454545]"
               >
                 Learn More
               </ButtonLink>
@@ -130,18 +130,18 @@ const LoadingSkeleton = () => {
       <div className="w-full h-[calc(100%-5.25rem)] mt-[5.25rem] relative z-20">
         <Container className="w-full h-full flex flex-col justify-end md:justify-center pb-10">
           <div className="space-y-2 lg:w-[40vw]">
-            <div className="h-16 animate-pulse bg-slate-700 w-[75%]"></div>
-            <div className="h-40 animate-pulse w-full bg-slate-700"></div>
+            <div className="h-16 animate-pulse bg-neutral-700 w-[75%]"></div>
+            <div className="h-40 animate-pulse w-full bg-neutral-700"></div>
             <div className="flex items-center gap-5">
-              <span className="h-10 w-[7.5rem] animate-pulse bg-slate-700"></span>
-              <span className="h-10 w-[7.5rem] animate-pulse bg-slate-700"></span>
+              <span className="h-10 w-[7.5rem] animate-pulse bg-neutral-700"></span>
+              <span className="h-10 w-[7.5rem] animate-pulse bg-neutral-700"></span>
             </div>
           </div>
         </Container>
       </div>
       <div className="absolute hidden md:flex items-center gap-5 right-10 bottom-32 z-50 isolate">
-        <span className="h-10 w-10 rounded-full animate-pulse bg-slate-700"></span>
-        <span className="h-10 w-10 rounded-full animate-pulse bg-slate-700"></span>
+        <span className="h-10 w-10 rounded-full animate-pulse bg-neutral-700"></span>
+        <span className="h-10 w-10 rounded-full animate-pulse bg-neutral-700"></span>
       </div>
     </div>
   );

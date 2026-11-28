@@ -94,7 +94,7 @@ const SearchBar = ({
                 return (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 rounded-md p-2 bg-slate-700 animate-pulse"
+                    className="flex items-center gap-2 rounded-md p-2 bg-neutral-700 animate-pulse"
                   >
                     <div className="min-h-[6.25rem] min-w-[5rem] overflow-hidden rounded-md"></div>
                   </div>
@@ -139,7 +139,7 @@ const SearchBar = ({
               href={`${ROUTES.SEARCH}?q=${encodeURIComponent(searchValue)}`}
               onClick={handleAnimeClick}
             >
-              <Button className="w-full bg-[#e9376b] text-white">
+              <Button className="w-full bg-[#454545] text-white">
                 Show More
               </Button>
             </Link>
@@ -157,7 +157,7 @@ const SearchBar = ({
                 return (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 rounded-md p-2 bg-slate-700 animate-pulse"
+                    className="flex items-center gap-2 rounded-md p-2 bg-neutral-700 animate-pulse"
                   >
                     <div className="min-h-[2.25rem] min-w-[1.875rem] overflow-hidden rounded-md"></div>
                   </div>
@@ -198,7 +198,7 @@ const SearchBar = ({
               href={`${ROUTES.SEARCH}?q=${encodeURIComponent(searchValue)}`}
               onClick={handleAnimeClick}
             >
-              <Button size="sm" className="w-full bg-[#e9376b] text-white">
+              <Button size="sm" className="w-full bg-[#454545] text-white">
                 Show More
               </Button>
             </Link>
