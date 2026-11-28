@@ -1,3 +1,1 @@
-export async function GET() {
-  return Response.json({error:"External video proxy is disabled."},{status:403});
-}
+export async function GET(){return Response.json({error:"Provider not configured",providers:{},streams:[]},{status:503});}

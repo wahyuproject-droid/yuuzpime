@@ -6,14 +6,13 @@
   "start_url": "/",
   "name": "YuuZPime",
   "short_name": "YuuZPime",
-  "description": "Anime discovery in guest mode",
+  "description": "Watch anime with ease and no ads",
   "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/yuuz-logo.svg",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "type": "image/svg+xml"
     }
   ]
 }

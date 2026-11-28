@@ -15,8 +15,8 @@ import Hls from "hls.js";
 import { IEpisodeServers, IEpisodeSource, IEpisodes } from "@/types/episodes"; // Adjust path as needed
 import loadingImage from "@/assets/genkai.gif"; // Adjust path as needed
 import artplayerPluginHlsControl from "artplayer-plugin-hls-control";
-import artplayerPluginAmbilight from "artplayer-plugin-ambilight";
 import { cn } from "@/lib/utils";
+import { buildStreamProxyUrl } from "@/lib/local-proxy";
 import { useAuthStore } from "@/store/auth-store";
 import useBookMarks from "@/hooks/use-get-bookmark";
 import { pb } from "@/lib/pocketbase";
@@ -56,7 +56,7 @@ const generateHighlights = (
 };
 
 // --- The Combined ArtPlayer Component ---
-function MiruPlayer({
+function KitsunePlayer({
   episodeInfo,
   animeInfo,
   subOrDub,
@@ -65,15 +65,19 @@ function MiruPlayer({
   serversData,
   onError,
   ...rest // Spread other div attributes like className, id, etc.
-}: ArtPlayerProps): JSX.Element {
+}: ArtPlayerProps): React.JSX.Element {
   const artContainerRef = useRef<HTMLDivElement>(null); // Ref for the mounting div
   const artInstanceRef = useRef<Artplayer | null>(null); // Ref for the ArtPlayer instance
   const hlsInstanceRef = useRef<Hls | null>(null); // Ref for the Hls.js instance
 
-  // State only needed for the current auto-skip setting
-  const [isAutoSkipEnabled, setIsAutoSkipEnabled] = useState(autoSkip);
+  const isAutoSkipEnabledRef = useRef<boolean>(autoSkip);
+  const animeInfoRef = useRef(animeInfo);
+  const serversDataRef = useRef(serversData);
+  animeInfoRef.current = animeInfo;
+  serversDataRef.current = serversData;
 
   const bookmarkIdRef = useRef<string | null>(null);
+  const inflightBookmarkRef = useRef<Promise<string | null> | null>(null);
   const watchHistoryIdsRef = useRef<string[]>([]); // Store initial list
   const watchedRecordIdRef = useRef<string | null>(null);
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -87,18 +91,71 @@ function MiruPlayer({
   });
 
   useEffect(() => {
-    setIsAutoSkipEnabled(autoSkip);
+    isAutoSkipEnabledRef.current = autoSkip;
   }, [autoSkip]);
 
-  // --- Construct Stream URI via Next.js internal /api/proxy ---
+  const ensureBookmarkId = React.useCallback(async (): Promise<string | null> => {
+    if (bookmarkIdRef.current) return bookmarkIdRef.current;
+    if (inflightBookmarkRef.current) return inflightBookmarkRef.current;
+    const currentUserId = auth?.id || pb.authStore.record?.id;
+    const info = animeInfoRef.current;
+    if (!currentUserId || !info?.id || info.id === "0") return null;
+
+    inflightBookmarkRef.current = createOrUpdateBookMark(
+      String(info.id),
+      info.title || "Anime",
+      info.image || "",
+      "watching",
+      false,
+    )
+      .then((id) => {
+        if (id) bookmarkIdRef.current = id;
+        return id;
+      })
+      .finally(() => {
+        inflightBookmarkRef.current = null;
+      });
+
+    return inflightBookmarkRef.current;
+  }, [auth?.id, createOrUpdateBookMark]);
+
+  const ensureBookmarkAndSync = React.useCallback(
+    async (currentTime: number, duration: number) => {
+      const bId = await ensureBookmarkId();
+      if (!bId) return;
+      const srv = serversDataRef.current;
+      const epNum = parseInt(srv.episodeNo, 10) || 1;
+      const recordId = await syncWatchProgress(
+        bId,
+        watchedRecordIdRef.current,
+        {
+          episodeId: srv.episodeId,
+          episodeNumber: epNum,
+          current: currentTime,
+          duration: duration,
+        },
+      );
+      if (recordId) {
+        watchedRecordIdRef.current = recordId;
+        if (!watchHistoryIdsRef.current.includes(recordId)) {
+          watchHistoryIdsRef.current.push(recordId);
+        }
+      }
+    },
+    [ensureBookmarkId, syncWatchProgress],
+  );
+
+  // --- Construct Stream URI via active HLS proxy (/api/proxy or local companion) ---
+  const firstSource = episodeInfo?.sources?.[0];
   const uri = useMemo(() => {
-    const firstSourceUrl = episodeInfo?.sources?.[0]?.url;
-    if (!firstSourceUrl) return null;
-    const referer = episodeInfo?.headers?.Referer;
-    const encodedUrl = encodeURIComponent(firstSourceUrl);
-    const refererParam = referer ? `&referer=${encodeURIComponent(referer)}` : "";
-    return `/api/proxy?url=${encodedUrl}${refererParam}`;
-  }, [episodeInfo]);
+    if (!firstSource?.url) return null;
+    return buildStreamProxyUrl({
+      url: firstSource.url,
+      referer: firstSource.referer || episodeInfo?.headers?.Referer,
+      headers: firstSource.headers,
+      playlistKey: firstSource.playlist_key,
+    });
+  }, [firstSource, episodeInfo]);
 
   const skipTimesRef = useRef<{
     introStart?: number;
@@ -110,8 +167,8 @@ function MiruPlayer({
   }>({ validIntro: false, validOutro: false });
 
   useEffect(() => {
-    if (!auth || !animeInfo.id || !serversData.episodeId) {
-      // Reset refs if critical info is missing
+    const currentUserId = auth?.id || pb.authStore.record?.id;
+    if (!currentUserId || !animeInfo.id || !serversData.episodeId) {
       bookmarkIdRef.current = null;
       watchedRecordIdRef.current = null;
       watchHistoryIdsRef.current = [];
@@ -120,19 +177,13 @@ function MiruPlayer({
       return;
     }
 
-    let isMounted = true; // Track mount status for async operations
+    let isMounted = true;
 
     const fetchBookmarkAndWatchedId = async () => {
-      const id = await createOrUpdateBookMark(
-        animeInfo.id,
-        animeInfo.title,
-        animeInfo.image,
-        "watching",
-        false,
-      );
+      const id = await ensureBookmarkId();
 
       if (!isMounted || !id) {
-        bookmarkIdRef.current = null; // Clear if failed or unmounted
+        bookmarkIdRef.current = null;
         watchedRecordIdRef.current = null;
         watchHistoryIdsRef.current = [];
         initialSeekTimeRef.current = null;
@@ -141,13 +192,12 @@ function MiruPlayer({
       }
 
       bookmarkIdRef.current = id;
-      hasMetMinWatchTimeRef.current = false; // Reset min watch time check
+      hasMetMinWatchTimeRef.current = false;
 
-      // Now find the specific watched record ID for THIS episode
-      // Fetch again with expand (or use initial list if sufficient)
       try {
         const expandedBookmark = await pb.collection("bookmarks").getOne(id, {
           expand: "watchHistory",
+          requestKey: null,
         });
 
         if (!isMounted) return;
@@ -155,7 +205,7 @@ function MiruPlayer({
         const history = expandedBookmark.expand?.watchHistory as
           | any[]
           | undefined;
-        const currentEpNo = parseInt(serversData.episodeNo);
+        const currentEpNo = parseInt(serversData.episodeNo, 10);
         const existingWatched = history?.find(
           (watched: any) =>
             (currentEpNo && Number(watched.episodeNumber) === currentEpNo) ||
@@ -171,17 +221,27 @@ function MiruPlayer({
           hasMetMinWatchTimeRef.current =
             initialSeekTimeRef.current !== null &&
             initialSeekTimeRef.current >= WATCH_PROGRESS_MIN_WATCH_TIME;
+          if (
+            artInstanceRef.current &&
+            initialSeekTimeRef.current &&
+            initialSeekTimeRef.current > 0 &&
+            artInstanceRef.current.duration > 0 &&
+            initialSeekTimeRef.current < artInstanceRef.current.duration - 5 &&
+            artInstanceRef.current.currentTime < 5
+          ) {
+            artInstanceRef.current.seek = initialSeekTimeRef.current;
+            initialSeekTimeRef.current = null;
+          }
         } else {
-          watchedRecordIdRef.current = null; // Explicitly set to null
-          initialSeekTimeRef.current = null; // Ensure it's null if no record
+          watchedRecordIdRef.current = null;
+          initialSeekTimeRef.current = null;
           hasMetMinWatchTimeRef.current = false;
         }
       } catch (e) {
         console.error("Error fetching bookmark watch history:", e);
         if (!isMounted) return;
-        // Keep bookmarkId, but assume no watched record found
         watchedRecordIdRef.current = null;
-        initialSeekTimeRef.current = null; // Ensure it's null if no record
+        initialSeekTimeRef.current = null;
         hasMetMinWatchTimeRef.current = false;
       }
     };
@@ -189,18 +249,14 @@ function MiruPlayer({
     fetchBookmarkAndWatchedId();
 
     return () => {
-      isMounted = false; // Cleanup flag
-      // Optional: Clear refs on unmount? Or rely on fetch logic?
-      // bookmarkIdRef.current = null;
-      // watchedRecordIdRef.current = null;
+      isMounted = false;
     };
   }, [
-    auth,
+    auth?.id,
     animeInfo.id,
-    animeInfo.title,
-    animeInfo.image,
     serversData.episodeId,
-    createOrUpdateBookMark,
+    serversData.episodeNo,
+    ensureBookmarkId,
   ]);
 
   // --- Effect for Player Initialization and Cleanup ---
@@ -238,35 +294,58 @@ function MiruPlayer({
     skipTimesRef.current.outroStart = outroStart;
     skipTimesRef.current.outroEnd = outroEnd; // Store the raw value
 
-    // Subtitle Track Selector Options
-    const trackOptions: any = (episodeInfo?.subtitles ?? []).map((track) => ({
-      default: track.lang === "English" || track.lang === "en",
-      html: track.lang,
+    // Subtitle Track Selector Options - prioritize English as default
+    const isEnglish = (lang?: string) => {
+      const l = (lang || "").toLowerCase();
+      return l === "en" || l === "eng" || l.includes("english");
+    };
+
+    const validSubtitles = (episodeInfo?.subtitles ?? []).filter(
+      (track) => track.url && !track.url.includes("thumbnails"),
+    );
+
+    const defaultTrack =
+      validSubtitles.find((t) => isEnglish(t.lang) && t.default)?.url ||
+      validSubtitles.find((t) => isEnglish(t.lang))?.url ||
+      validSubtitles.find((t) => t.default)?.url ||
+      validSubtitles[0]?.url;
+
+    const defaultTrackObj = validSubtitles.find((t) => t.url === defaultTrack);
+    const defaultTrackTitle = defaultTrackObj?.lang || (validSubtitles.length > 0 ? "English" : "Off");
+
+    const defaultTrackProxyUrl = defaultTrack
+      ? buildStreamProxyUrl({
+          url: defaultTrack,
+          referer: firstSource?.referer || episodeInfo?.headers?.Referer,
+          headers: firstSource?.headers,
+        })
+      : undefined;
+
+    const trackOptions: any = validSubtitles.map((track) => ({
+      default: track.url === defaultTrack,
+      html: track.lang || "Subtitle",
       url: track.url,
     }));
 
-    const defaultTrack =
-      episodeInfo?.subtitles?.find(
-        (track) => track.lang === "English" || track.lang === "en",
-      )?.url || episodeInfo?.subtitles?.[0]?.url;
-
-    const defaultTrackProxyUrl = defaultTrack
-      ? `/api/proxy?url=${encodeURIComponent(defaultTrack)}`
-      : undefined;
+    const defaultTrackExt = defaultTrack
+      ? defaultTrack.split("?")[0].split("#")[0].split(".").pop()?.toLowerCase()
+      : "vtt";
+    const defaultTrackType =
+      defaultTrackExt === "srt" || defaultTrackExt === "ass" ? defaultTrackExt : "vtt";
 
     // Direct Subtitle Option based on subOrDub
     const subtitleConfig: Option["subtitle"] =
       subOrDub === "sub" && defaultTrackProxyUrl
         ? {
             url: defaultTrackProxyUrl,
-            type: "vtt",
+            type: defaultTrackType,
             style: {
               color: "#FFFFFF",
               fontSize: "22px",
               textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
             },
             encoding: "utf-8",
-            escape: false,
+            escape: true,
           }
         : {};
 
@@ -334,7 +413,7 @@ function MiruPlayer({
     const finalOptions: Option = {
       container: artContainerRef.current,
       url: uri,
-      type: "m3u8", // Explicitly set type for HLS
+      type: firstSource?.type === "mp4" ? "mp4" : "m3u8",
       customType: {
         m3u8: (
           videoElement: HTMLMediaElement,
@@ -394,21 +473,14 @@ function MiruPlayer({
             auto: "Auto",
           },
         }),
-        artplayerPluginAmbilight({
-          // Configure Ambilight
-          blur: "30", // Use numbers
-          opacity: 0.8,
-          frequency: 10,
-          duration: 0.3,
-          zIndex: -1,
-        }),
+        
       ],
       settings: [
         // Configure settings panel items
         {
           width: 250,
           html: "Subtitle",
-          tooltip: "Subtitle",
+          tooltip: defaultTrackTitle,
           selector: [
             {
               html: "Display",
@@ -424,11 +496,23 @@ function MiruPlayer({
             },
             ...trackOptions, // Add subtitle track choices
           ],
-          onSelect: function(item: any) {
+          onSelect: async function(item: any) {
             if (item.url && typeof item.url === "string") {
-              const proxiedUrl = `/api/proxy?url=${encodeURIComponent(item.url)}`;
-              art.subtitle.switch(proxiedUrl, {
+              const proxiedUrl = buildStreamProxyUrl({
+                url: item.url,
+                referer: firstSource?.referer || episodeInfo?.headers?.Referer,
+                headers: firstSource?.headers,
+              });
+              const cleanUrl = item.url.split("?")[0].split("#")[0];
+              const ext = cleanUrl.split(".").pop()?.toLowerCase();
+              const subType = ext === "srt" || ext === "ass" ? ext : "vtt";
+
+              art.subtitle.show = true;
+              await art.subtitle.switch(proxiedUrl, {
                 name: item.html,
+                type: subType,
+                escape: true,
+                encoding: "utf-8",
               });
               return item.html ?? "Subtitle";
             }
@@ -490,6 +574,10 @@ function MiruPlayer({
       const art = artInstanceRef.current;
       if (!art || art.loading.show) return;
 
+      if (art.subtitle?.show) {
+        (art.subtitle as any).update();
+      }
+
       const currentTime = art.currentTime;
       const duration = art.duration;
       const {
@@ -519,7 +607,7 @@ function MiruPlayer({
       // Get the manual skip control instance *once* per update
       const manualSkip = art.controls["manual-skip"]; // Access by name
 
-      if (isAutoSkipEnabled) {
+      if (isAutoSkipEnabledRef.current) {
         // Auto Skip Logic
         if (manualSkip?.style?.display !== "none") {
           // Ensure manual button is hidden
@@ -543,7 +631,6 @@ function MiruPlayer({
           }
           // Update text/tooltip
           const skipText = inIntro ? "Intro" : "Outro";
-          // Update HTML text if needed (more complex, might need querySelector)
           const textElement = manualSkip.querySelector(".art-skip-text");
           if (textElement && textElement.textContent !== `Skip ${skipText}`) {
             textElement.textContent = `Skip ${skipText}`;
@@ -560,88 +647,68 @@ function MiruPlayer({
       // 1. Check if minimum watch time is met to potentially create record
       if (
         !hasMetMinWatchTimeRef.current &&
-        currentTime >= WATCH_PROGRESS_MIN_WATCH_TIME
+        currentTime >= WATCH_PROGRESS_MIN_WATCH_TIME &&
+        duration > 0
       ) {
-        console.log("Minimum watch time met.");
         hasMetMinWatchTimeRef.current = true;
-        // Immediately sync progress if min time just met and no record exists
         if (!watchedRecordIdRef.current) {
-          console.log("Triggering initial sync after min watch time.");
-          syncWatchProgress(
-            bookmarkIdRef.current,
-            null, // Force creation attempt
-            {
-              episodeId: serversData.episodeId,
-              episodeNumber: parseInt(serversData.episodeNo),
-              current: currentTime,
-              duration: duration,
-            },
-          ).then((newId) => {
-            if (newId) {
-              watchedRecordIdRef.current = newId;
-              watchHistoryIdsRef.current.push(newId);
-            }
-          });
-          lastUpdateTimeRef.current = Date.now(); // Prevent immediate throttled update
+          lastUpdateTimeRef.current = Date.now();
+          void ensureBookmarkAndSync(currentTime, duration);
         }
       }
 
-      // 2. Throttle updates if playing and min time met OR record already exists
+      // 2. Throttle updates every 10s if playing and min time met OR record already exists
       if (
+        duration > 0 &&
         (hasMetMinWatchTimeRef.current || watchedRecordIdRef.current) &&
         Date.now() - lastUpdateTimeRef.current > WATCH_PROGRESS_UPDATE_INTERVAL
       ) {
-        // Call sync directly now, timer approach less reliable with state/refs
-        // console.log("Updating progress via interval check")
-        syncWatchProgress(bookmarkIdRef.current, watchedRecordIdRef.current, {
-          episodeId: serversData.episodeId,
-          episodeNumber: parseInt(serversData.episodeNo),
-          current: currentTime,
-          duration: duration,
-        }).then((id) => {
-          if (id) watchedRecordIdRef.current = id; // Update ref just in case
-        });
-        lastUpdateTimeRef.current = Date.now(); // Reset timer
+        lastUpdateTimeRef.current = Date.now();
+        void ensureBookmarkAndSync(currentTime, duration);
       }
     };
 
     // --- Event Listeners ---
     art.on("ready", () => {
-      console.log("ArtPlayer ready. Duration:", art.duration);
-      // Adjust subtitle size initially
+      try {
+        Object.defineProperty(art.subtitle, "textTrack", {
+          configurable: true,
+          get: () =>
+            art.template.$track?.track ||
+            art.template.$video?.textTracks?.[0],
+        });
+      } catch (e) {
+        void e;
+      }
+
+      if (subOrDub === "sub" && defaultTrackProxyUrl) {
+        art.subtitle.show = true;
+      }
+
       art.subtitle.style({
-        fontSize: art.height * 0.04 + "px", // Adjust multiplier as needed
+        fontSize: Math.max(14, Math.min(32, art.height * 0.04)) + "px",
       });
       // --- SEEK TO LAST POSITION ---
       const seekTime = initialSeekTimeRef.current;
-      // Check if seekTime is a valid number, greater than 0,
-      // and less than the duration (minus a small buffer like 5s to avoid seeking to the very end)
       if (
         seekTime !== null &&
         seekTime > 0 &&
         art.duration > 0 &&
         seekTime < art.duration - 5
       ) {
-        console.log(`Player ready, seeking to initial timestamp: ${seekTime}`);
-        // Optional: Add a very small delay for HLS stability if needed
         setTimeout(() => {
           if (artInstanceRef.current) {
-            // Check if instance still exists
             artInstanceRef.current.seek = seekTime;
           }
         }, 100);
         initialSeekTimeRef.current = null;
       } else {
-        console.log(
-          "Player ready, not seeking (no valid initial time found or near end).",
-        );
-        initialSeekTimeRef.current = null; // Clear ref even if not seeking
+        initialSeekTimeRef.current = null;
       }
     });
 
     art.on("resize", () => {
-      if (!artInstanceRef.current) return; // Guard against destroyed instance
-      // Clamp font size between reasonable min/max values
+      if (!artInstanceRef.current) return;
       const newSize = Math.max(
         14,
         Math.min(32, artInstanceRef.current.height * 0.04),
@@ -664,24 +731,20 @@ function MiruPlayer({
     const handleInteractionUpdate = () => {
       const art = artInstanceRef.current;
       if (!art || !art.duration || art.duration <= 0) return;
-      // Only update if min time met or record exists
-      if (hasMetMinWatchTimeRef.current || watchedRecordIdRef.current) {
-        console.log("Syncing progress on pause/seek.");
-        // Clear any pending throttled update
+      if (
+        hasMetMinWatchTimeRef.current ||
+        watchedRecordIdRef.current ||
+        art.currentTime >= WATCH_PROGRESS_MIN_WATCH_TIME
+      ) {
+        hasMetMinWatchTimeRef.current = true;
         if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
-        syncWatchProgress(bookmarkIdRef.current, watchedRecordIdRef.current, {
-          episodeId: serversData.episodeId,
-          episodeNumber: parseInt(serversData.episodeNo),
-          current: art.currentTime,
-          duration: art.duration,
-        }).then((id) => {
-          if (id) watchedRecordIdRef.current = id;
-        });
         lastUpdateTimeRef.current = Date.now();
+        void ensureBookmarkAndSync(art.currentTime, art.duration);
       }
     };
     art.on("video:pause", handleInteractionUpdate);
     art.on("video:seeked", handleInteractionUpdate);
+    art.on("video:ended", handleInteractionUpdate);
 
     // --- Callback for Parent ---
     if (getInstance && typeof getInstance === "function") {
@@ -690,21 +753,13 @@ function MiruPlayer({
 
     // --- Cleanup Function ---
     return () => {
-      console.log(
-        "Running cleanup for ArtPlayer instance:",
-        artInstanceRef.current?.id,
-      );
-
-      const art = artInstanceRef.current; // Get instance ref
-      const hls = hlsInstanceRef.current; // Get HLS ref
+      const art = artInstanceRef.current;
+      const hls = hlsInstanceRef.current;
 
       if (hls) {
-        console.log("Cleanup: Detaching HLS media");
-        // Although hls.destroy() calls detachMedia, being explicit can sometimes help timing
         if (hls.media) {
           hls.detachMedia();
         }
-        console.log("Cleanup: Destroying HLS instance.");
         hls.destroy();
         hlsInstanceRef.current = null;
       }
@@ -714,56 +769,34 @@ function MiruPlayer({
         art.duration > 0 &&
         (hasMetMinWatchTimeRef.current || watchedRecordIdRef.current)
       ) {
-        console.log("Syncing final progress on unmount.");
-        // Use current values directly
-        syncWatchProgress(bookmarkIdRef.current, watchedRecordIdRef.current, {
-          episodeId: serversData.episodeId,
-          episodeNumber: parseInt(serversData.episodeNo),
-          current: art.currentTime,
-          duration: art.duration,
-        }); // Don't need to wait for promise here
+        void ensureBookmarkAndSync(art.currentTime, art.duration);
       }
 
-      // Clear throttle timer
       if (updateTimerRef.current) {
         clearTimeout(updateTimerRef.current);
         updateTimerRef.current = null;
       }
 
       if (art) {
-        console.log("Cleanup: Destroying ArtPlayer instance.");
         art.off("video:pause", handleInteractionUpdate);
         art.off("video:seeked", handleInteractionUpdate);
+        art.off("video:ended", handleInteractionUpdate);
         art.off("video:timeupdate", handleTimeUpdate);
 
-        console.log("Cleanup: Pausing player");
-        art.pause(); // Explicitly pause
+        art.pause();
 
         if (art.video) {
-          console.log("Cleanup: Removing video src and loading");
-          art.video.removeAttribute("src"); // Remove source
-          art.video.load(); // Force reload/reset state
+          art.video.removeAttribute("src");
+          art.video.load();
         }
 
         if (currentHlsInstanceForCleanup) {
-          console.log(
-            "Cleanup: Destroying HLS instance specifically for ArtPlayer:",
-            art.id,
-          );
           currentHlsInstanceForCleanup.destroy();
-          // If the global hlsInstanceRef still points to this one, nullify it.
           if (hlsInstanceRef.current === currentHlsInstanceForCleanup) {
             hlsInstanceRef.current = null;
           }
-          currentHlsInstanceForCleanup = null; // Clear the closure variable
+          currentHlsInstanceForCleanup = null;
         } else if (hlsInstanceRef.current) {
-          // Fallback: if currentHlsInstanceForCleanup wasn't set but global one exists,
-          // it *might* be the one. This is less ideal but a safeguard.
-          // The art.on('destroy') for HLS should have ideally handled this.
-          console.warn(
-            "Cleanup: currentHlsInstanceForCleanup was null, attempting to destroy hlsInstanceRef.current for ArtPlayer:",
-            art.id,
-          );
           hlsInstanceRef.current.destroy();
           hlsInstanceRef.current = null;
         }
@@ -775,7 +808,7 @@ function MiruPlayer({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uri, episodeInfo, animeInfo, subOrDub, getInstance, autoSkip]);
+  }, [uri, subOrDub]);
 
   // --- Render ---
   return (
@@ -804,5 +837,4 @@ function MiruPlayer({
   );
 }
 
-export { MiruPlayer };
-export default MiruPlayer;
+export default KitsunePlayer;

@@ -1,3 +1,1 @@
-export async function GET() {
-  return Response.json({ status: "up and running" }, { status: 200 });
-}
+export async function GET(){return Response.json({ok:true,mode:"guest",player:"ArtPlayer",providers:[]});}

@@ -200,10 +200,10 @@ const ActivityProgression = ({ targetUser }: Props) => {
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Tv className="h-5 w-5 text-cyan-400" />
+                <Tv className="h-5 w-5 text-[#e9376b]" />
                 Watched {totalEpisodesCount} episodes in {selectedYear}
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-gray-400 mt-1">
                 Click any cell on the contribution graph to filter activity for that specific day.
               </p>
             </div>
@@ -248,7 +248,7 @@ const ActivityProgression = ({ targetUser }: Props) => {
           {/* Activity Progression Feed Header */}
           <div className="border-t border-slate-800 pt-6">
             <h4 className="text-sm font-bold text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-cyan-400" />
+              <Clock className="h-4 w-4 text-[#e9376b]" />
               {selectedDate
                 ? `Activity on ${new Date(selectedDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
                 : `${selectedYear} Activity Activity Timeline`}
@@ -294,7 +294,7 @@ const ActivityProgression = ({ targetUser }: Props) => {
                           </div>
                         )}
                         <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-bold text-white truncate group-hover:text-cyan-400 transition">
+                          <span className="text-sm font-bold text-white truncate group-hover:text-[#e9376b] transition">
                             Watched Episode {act.episodeNumber} of {act.animeTitle}
                           </span>
                           <span className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
@@ -306,7 +306,7 @@ const ActivityProgression = ({ targetUser }: Props) => {
 
                       <Link
                         href={`/anime/watch?anime=${act.animeId}&ep=${act.episodeNumber}`}
-                        className="flex items-center gap-1 text-xs font-bold text-gray-400 group-hover:text-cyan-400 transition shrink-0 pl-3"
+                        className="flex items-center gap-1 text-xs font-bold text-gray-400 group-hover:text-[#e9376b] transition shrink-0 pl-3"
                       >
                         Watch <ChevronRight className="h-4 w-4" />
                       </Link>
@@ -340,7 +340,7 @@ const ActivityProgression = ({ targetUser }: Props) => {
                     }}
                     className={`flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold transition ${
                       isSelected
-                        ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
+                        ? "bg-[#e9376b] text-white shadow-md"
                         : "text-gray-400 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
@@ -359,7 +359,7 @@ const ActivityProgression = ({ targetUser }: Props) => {
             </div>
             <div className="flex flex-col">
               <span className="text-xs font-bold text-purple-300 uppercase tracking-wider">
-                Joined Miru
+                Joined Kitsune
               </span>
               <span className="text-xs text-gray-300 font-semibold mt-0.5">
                 First joined in {formattedJoinedDate}

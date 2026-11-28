@@ -1,51 +1,42 @@
-import Link from 'next/link';
-import { Play, ExternalLink, ArrowLeft } from 'lucide-react';
-
-type Media = {
-  id: number; isAdult: boolean; genres: string[];
-  title: { english?: string; romaji?: string };
-  coverImage?: { large?: string };
-  episodes?: number; status?: string; format?: string; averageScore?: number;
-  trailer?: { id?: string; site?: string };
-  externalLinks?: { site: string; url: string }[];
-  streamingEpisodes?: { title: string; url: string; site: string }[];
-};
-const domains = ['crunchyroll.com','netflix.com','hidive.com','disneyplus.com','iq.com','bilibili.tv','primevideo.com','hulu.com'];
-function official(url:string) {
-  try { const u = new URL(url); return u.protocol==='https:' && domains.some(d=>u.hostname===d||u.hostname.endsWith('.'+d)); }
-  catch { return false; }
+"use client";
+import {useState,useEffect,useMemo,useRef,Suspense} from "react";
+import dynamic from "next/dynamic";
+import {useSearchParams} from "next/navigation";
+import Link from "next/link";
+import {useGetAnimeDetails} from "@/query/get-anime-details";
+import type {IEpisodeSource,IEpisodeServers} from "@/types/episodes";
+import type Artplayer from "artplayer";
+const KitsunePlayer=dynamic(()=>import("@/components/kitsune-player"),{ssr:false});
+const field="w-full rounded-xl border border-white/15 bg-neutral-900 px-3 py-2.5 text-sm";
+const button="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black";
+function Watch(){
+ const p=useSearchParams(),id=p.get("anime")||"";
+ const [ep,setEp]=useState(Math.max(1,Number(p.get("ep"))||1));
+ const [url,setUrl]=useState(""),[input,setInput]=useState(""),[subtitle,setSubtitle]=useState(""),[err,setErr]=useState("");
+ const [kind,setKind]=useState("mp4"),[autoSkip,setAutoSkip]=useState(false);
+ const [introStart,setIntroStart]=useState(0),[introEnd,setIntroEnd]=useState(0),[outroStart,setOutroStart]=useState(0),[outroEnd,setOutroEnd]=useState(0);
+ const owned=useRef<string[]>([]);
+ const {data}=useGetAnimeDetails(id);
+ const info=data?.anime?.info;
+ const title=info?.name||"YuuZPime Watch";
+ const key="yuuzpime-watch:"+id+":"+ep;
+ useEffect(()=>()=>{owned.current.forEach(u=>URL.revokeObjectURL(u));},[]);
+ const loadUrl=()=>{try{const u=new URL(input.trim());if(u.protocol!=="https:"||u.username||u.password)throw Error();const path=u.pathname.toLowerCase();if(!path.endsWith(".mp4")&&!path.endsWith(".m3u8")&&!path.endsWith(".webm"))throw Error();setKind(path.endsWith(".m3u8")?"m3u8":"mp4");setErr("");setUrl(u.href);}catch{setErr("Gunakan URL HTTPS langsung MP4, WebM, atau HLS (m3u8) dari sumber yang kamu punya izin untuk gunakan.");}};
+ const source=useMemo<IEpisodeSource>(()=>({headers:{Referer:""},sources:url?[{url,type:kind}]:[],subtitles:subtitle?[{url:subtitle,lang:"Subtitle",default:true}]:[],intro:{start:introStart,end:introEnd},outro:{start:outroStart,end:outroEnd},anilistID:Number(id)||0,malID:0}),[url,kind,subtitle,introStart,introEnd,outroStart,outroEnd,id]);
+ const server=useMemo<IEpisodeServers>(()=>({episodeId:String(ep),episodeNo:String(ep),sub:[],dub:[],raw:[]}),[ep]);
+ function connect(art:Artplayer){
+   art.on("ready",()=>{try{const t=Number(localStorage.getItem(key));if(t>0&&t<art.duration-2)art.seek=t;}catch{}});
+   let last=0;const save=()=>{try{localStorage.setItem(key,String(art.currentTime));if(id&&info&&art.currentTime>=10){const list=JSON.parse(localStorage.getItem("watched")||"[]");const other=Array.isArray(list)?list.filter((x:any)=>x.anime?.id!==id):[];const old=Array.isArray(list)?list.find((x:any)=>x.anime?.id===id):null;localStorage.setItem("watched",JSON.stringify([...other.slice(-99),{anime:{id,title,poster:info.poster},episodes:[...new Set([...(old?.episodes||[]),String(ep)])]}]));}}catch{}};
+   art.on("video:timeupdate",()=>{if(Date.now()-last>10000){last=Date.now();save();}});art.on("video:pause",save);art.on("video:ended",save);
+ }
+ return <section className="mx-auto max-w-6xl px-4 pb-20 pt-28 space-y-5">
+ <Link href="/" className="text-sm text-neutral-400">← Beranda</Link>
+ <h1 className="text-xl sm:text-3xl font-bold">{title}</h1>
+ <div className="grid lg:grid-cols-[1fr_270px] gap-4">
+ <div className="space-y-3">{url?<KitsunePlayer key={key+url+subtitle+introStart+introEnd+outroStart+outroEnd} episodeInfo={source} animeInfo={{id,title,image:info?.poster||""}} subOrDub="sub" serversData={server} autoSkip={autoSkip} getInstance={connect} onError={()=>setErr("Video tidak dapat dimuat. Periksa format, koneksi, dan izin CORS sumber video.")}/>:<div className="aspect-video rounded-xl bg-black border border-white/10 flex items-center justify-center text-center p-6 text-neutral-400">Pilih video milikmu atau sumber video berizin untuk mulai menonton.</div>}
+ {err&&<p role="alert" className="text-sm text-neutral-300">{err}</p>}
+ <div className="rounded-xl bg-neutral-900 border border-white/10 p-4 space-y-3"><h2 className="font-bold">Sumber video</h2><label className="block text-xs text-neutral-400">File video lokal (tidak diunggah)<input className={field} type="file" accept="video/mp4,video/webm" onChange={e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);owned.current.push(u);setUrl(u);setKind("mp4");setErr("");}}}/></label><form className="flex flex-wrap gap-2" onSubmit={e=>{e.preventDefault();loadUrl();}}><input className={field+" flex-1 min-w-0"} placeholder="URL HTTPS video berizin" value={input} onChange={e=>setInput(e.target.value)}/><button className={button}>Putar</button></form><label className="block text-xs text-neutral-400">Subtitle VTT lokal<input type="file" accept=".vtt,text/vtt" className={field} onChange={e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);owned.current.push(u);setSubtitle(u);}}}/></label><details className="text-sm"><summary>Skip intro / outro</summary><div className="grid grid-cols-2 gap-2 pt-2">{[["Intro awal",introStart,setIntroStart],["Intro akhir",introEnd,setIntroEnd],["Outro awal",outroStart,setOutroStart],["Outro akhir",outroEnd,setOutroEnd]].map(([label,value,setter]:any)=><label key={label} className="text-xs">{label} (detik)<input className={field} type="number" min="0" max="100000" value={value} onChange={e=>setter(Math.max(0,Math.min(100000,Number(e.target.value)||0)))}/></label>)}</div><label className="block mt-3"><input type="checkbox" checked={autoSkip} onChange={e=>setAutoSkip(e.target.checked)}/> Auto skip</label></details></div></div>
+ <aside className="rounded-xl border border-white/10 bg-neutral-900 p-4 space-y-3"><h2 className="font-bold">Episode {ep}</h2><label className="text-sm">Nomor episode<input className={field} type="number" min="1" max="10000" value={ep} onChange={e=>{setEp(Math.max(1,Math.min(10000,Number(e.target.value)||1)));setUrl("");setSubtitle("");}}/></label><div className="flex gap-2"><button className={button} disabled={ep<=1} onClick={()=>{setEp(x=>x-1);setUrl("");setSubtitle("");}}>Prev</button><button className={button} onClick={()=>{setEp(x=>x+1);setUrl("");setSubtitle("");}}>Next</button></div><p className="text-xs text-neutral-400">Pilih sumber video berizin untuk setiap episode. Kualitas dan audio HLS tersedia jika stream menyediakan beberapa track.</p></aside>
+ </div></section>;
 }
-async function load(id:number): Promise<Media|null> {
-  const r = await fetch('https://graphql.anilist.co', {
-    method:'POST', headers:{'Content-Type':'application/json',Accept:'application/json'},
-    body:JSON.stringify({query:'query($id:Int){Media(id:$id,type:ANIME,isAdult:false){id isAdult genres title{english romaji} coverImage{large} episodes status format averageScore trailer{id site} externalLinks{site url} streamingEpisodes{title url site}}}',variables:{id}}),
-    signal:AbortSignal.timeout(9000), next:{revalidate:300}
-  });
-  if(!r.ok)throw new Error('Catalog unavailable');
-  const j=await r.json();if(j.errors?.length)throw new Error('Catalog unavailable');
-  const m=j.data?.Media as Media|undefined;
-  return m?.isAdult===false&&!m.genres?.some(g=>['Hentai','Erotica','Ecchi'].includes(g))?m:null;
-}
-export default async function Page({searchParams}:{searchParams:Promise<{anime?:string;ep?:string}>}) {
-  const params=await searchParams;
-  const id=Number(params.anime);
-  let m:Media|null=null;
-  if(Number.isSafeInteger(id)&&id>0){try{m=await load(id)}catch{}}
-  if(!m)return <section className="mx-auto max-w-4xl px-4 py-20 text-center"><h1 className="text-xl font-bold">Anime tidak tersedia</h1><p className="mt-2 text-sm text-neutral-400">Periksa koneksi atau pilih judul dari katalog.</p><Link href="/" className="mt-5 inline-block rounded-xl bg-white px-5 py-3 text-sm font-bold text-black">Kembali</Link></section>;
-  const title=m.title.english||m.title.romaji||'Anime';
-  const trailer=m.trailer?.site==='youtube'&&/^[A-Za-z0-9_-]{11}$/.test(m.trailer.id||'')?m.trailer.id:undefined;
-  const providers=(m.externalLinks||[]).filter(x=>official(x.url));
-  const episodes=(m.streamingEpisodes||[]).filter(x=>official(x.url));
-  return <section className="mx-auto max-w-5xl space-y-5 px-2 pb-16 pt-12">
-    <Link href="/" className="inline-flex items-center gap-2 text-sm text-neutral-300"><ArrowLeft size={16}/> Beranda</Link>
-    <header className="flex items-center gap-4 rounded-2xl border border-white/10 bg-neutral-900 p-4">
-      {m.coverImage?.large&&<img src={m.coverImage.large} alt={title} className="h-28 w-20 shrink-0 rounded-lg object-cover" loading="lazy"/>}
-      <div className="min-w-0"><h1 className="text-xl font-bold sm:text-3xl">{title}</h1><p className="mt-2 text-sm text-neutral-400">{m.format||'Anime'} · {m.episodes??'—'} episode · {m.averageScore??'—'}%</p></div>
-    </header>
-    {trailer&&<section className="overflow-hidden rounded-2xl border border-white/10 bg-black"><h2 className="flex items-center gap-2 p-4 text-sm font-semibold"><Play size={18}/> Trailer (bukan episode penuh)</h2><iframe title={'Trailer '+title} src={'https://www.youtube-nocookie.com/embed/'+trailer} className="aspect-video w-full border-0" sandbox="allow-scripts allow-same-origin allow-presentation" allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen loading="lazy" referrerPolicy="strict-origin-when-cross-origin"/></section>}
-    <section className="space-y-3"><h2 className="text-lg font-bold">Tonton di penyedia resmi</h2><p className="text-xs text-neutral-400">Ketersediaan episode, wilayah, dan langganan mengikuti masing-masing penyedia. Tidak ada proxy pemutaran eksternal.</p>
-      {providers.length? <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{providers.map((x,i)=><a key={i} href={x.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-xl border border-white/10 bg-neutral-900 p-4 text-sm font-medium">{x.site}<ExternalLink size={16}/></a>)}</div>:<p className="rounded-xl border border-white/10 p-4 text-sm text-neutral-400">Belum ada tautan streaming resmi di katalog.</p>}
-    </section>
-    {episodes.length>0&&<section className="space-y-2"><h2 className="text-lg font-bold">Episode tersedia</h2>{episodes.slice(0,100).map((e,i)=><a key={i} href={e.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl border border-white/10 p-3 text-sm"><Play size={16}/><span className="min-w-0 flex-1">{e.title}<span className="block text-xs text-neutral-400">{e.site}</span></span><ExternalLink size={16}/></a>)}</section>}
-  </section>;
-}
+export default function Page(){return <Suspense fallback={<div className="p-24">Memuat Watch…</div>}><Watch/></Suspense>;}

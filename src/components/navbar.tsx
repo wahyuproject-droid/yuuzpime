@@ -1,23 +1,126 @@
 "use client";
+
 import Link from "next/link";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+
+import Container from "./container";
+import { Separator } from "./ui/separator";
+
+import { nightTokyo } from "@/utils/fonts";
+import { ROUTES } from "@/constants/routes";
+import React, { ReactNode, useEffect, useState } from "react";
+
 import SearchBar from "./search-bar";
-import { Menu, X, Home, Search } from "lucide-react";
-import { useState } from "react";
-export default function NavBar(){
-  const [open,setOpen]=useState(false);
-  return <header className="sticky top-0 z-[100] border-b border-white/10 bg-[#101010]">
-    <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:gap-5">
-      <Link href="/" className="flex shrink-0 items-center gap-2 text-white" aria-label="YuuZPime home">
-        <img src="/yuuz-logo.svg" alt="YuuZPime" width={34} height={34}/>
-        <span className="hidden font-extrabold tracking-tight sm:block">YuuZPime</span>
-      </Link>
-      <div className="min-w-0 flex-1"><SearchBar/></div>
-      <button className="shrink-0 rounded-lg p-2" aria-label="Menu" aria-expanded={open} onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button>
+import { MenuIcon, X } from "lucide-react";
+import useScrollPosition from "@/hooks/use-scroll-position";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
+import LoginPopoverButton from "./login-popover-button";
+import { useAuthStore } from "@/store/auth-store";
+import { pb } from "@/lib/pocketbase";
+import NavbarAvatar from "./navbar-avatar";
+import { toast } from "sonner";
+
+const menuItems: Array<{ title: string; href?: string }> = [
+  // {
+  //   title: "Home",
+  //   href: ROUTES.HOME,
+  // },
+  // {
+  //   title: "Catalog",
+  // },
+  // {
+  //   title: "News",
+  // },
+  // {
+  //   title: "Collection",
+  // },
+];
+
+const NavBar = () => {
+  const auth = useAuthStore();
+  const { y } = useScrollPosition();
+  const isHeaderSticky = y > 0;
+
+
+  return (
+    <div
+      className={cn([
+        "fixed top-0 left-0 right-0 h-fit w-full z-[100] transition-all duration-300",
+        "backdrop-blur-xl backdrop-saturate-150 border-b",
+        isHeaderSticky
+          ? "bg-slate-950/65 border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]"
+          : "bg-slate-950/35 border-white/5",
+      ])}
+    >
+      <Container className="flex items-center justify-between py-2 gap-3 ">
+        <Link
+          href={ROUTES.HOME}
+          className="flex items-center gap-1 cursor-pointer"
+        >
+          <Image src="/yuuz-logo.svg" alt="logo" width={42} height={42} />
+          <h1
+            className={cn([
+              nightTokyo.className,
+              "text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-200 tracking-widest",
+            ])}
+          >
+            YuuZPime
+          </h1>
+        </Link>
+
+        <div className="hidden lg:flex items-center gap-10 ml-20">
+          {menuItems.map((menu, idx) => (
+            <Link href={menu.href || "#"} key={idx}>
+              {menu.title}
+            </Link>
+          ))}
+        </div>
+        <div className="w-1/3 hidden lg:flex items-center gap-5">
+          <SearchBar />
+          <span className="text-xs text-neutral-400">Guest</span>
+        </div>
+        <div className="lg:hidden flex items-center gap-5">
+          <MobileMenuSheet trigger={<MenuIcon suppressHydrationWarning />} />
+          <span className="text-xs text-neutral-400">Guest</span>
+        </div>
+      </Container>
     </div>
-    {open&&<nav className="mx-auto flex max-w-[1400px] gap-3 border-t border-white/10 px-4 py-3 text-sm">
-      <Link href="/" onClick={()=>setOpen(false)} className="flex items-center gap-2"><Home size={16}/> Home</Link>
-      <Link href="/search" onClick={()=>setOpen(false)} className="flex items-center gap-2"><Search size={16}/> Katalog</Link>
-      <span className="ml-auto text-neutral-400">Guest</span>
-    </nav>}
-  </header>;
-}
+  );
+};
+
+const MobileMenuSheet = ({ trigger }: { trigger: ReactNode }) => {
+  const [open, setOpen] = useState<boolean>(false);
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger>{trigger}</SheetTrigger>
+      <SheetContent
+        className="flex flex-col w-[80vw] z-[150]"
+        hideCloseButton
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
+        <div className="w-full h-full relative">
+          <SheetClose className="absolute top-0 right-0">
+            <X />
+          </SheetClose>
+          <div className="flex flex-col gap-5 mt-10">
+            {menuItems.map((menu, idx) => (
+              <Link
+                href={menu.href || "#"}
+                key={idx}
+                onClick={() => setOpen(false)}
+              >
+                {menu.title}
+              </Link>
+            ))}
+            <Separator />
+            <SearchBar onAnimeClick={() => setOpen(false)} />
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+};
+
+export default NavBar;

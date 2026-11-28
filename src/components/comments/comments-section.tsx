@@ -50,8 +50,8 @@ const CommentsSection = ({ animeId, animeTitle, episodeNumber }: Props) => {
       });
       setContent("");
       setSpoil(false);
-    } catch {
-      // Toast notification is already handled by useAddComment onError
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -70,14 +70,14 @@ const CommentsSection = ({ animeId, animeTitle, episodeNumber }: Props) => {
       {/* Collapsible Accordion Header */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between cursor-pointer select-none border-b border-white/10 pb-3 group"
+        className="flex items-center justify-between cursor-pointer select-none border-b border-slate-800/80 pb-3 group"
       >
         <div className="flex items-center gap-3">
-          <MessageSquare className="h-5 w-5 text-cyan-400" />
-          <h3 className="text-lg md:text-xl font-bold text-white group-hover:text-cyan-300 transition">
+          <MessageSquare className="h-5 w-5 text-[#e9376b]" />
+          <h3 className="text-lg md:text-xl font-bold text-white group-hover:text-[#e9376b] transition">
             Episode Comments
           </h3>
-          <span className="text-xs font-bold bg-cyan-500/10 text-cyan-400 px-2.5 py-0.5 rounded-full border border-cyan-500/20">
+          <span className="text-xs font-bold bg-[#e9376b]/20 text-[#e9376b] px-2.5 py-0.5 rounded-full border border-[#e9376b]/30">
             {totalComments}
           </span>
         </div>
@@ -85,7 +85,7 @@ const CommentsSection = ({ animeId, animeTitle, episodeNumber }: Props) => {
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 w-8 p-0 text-slate-400 group-hover:text-white hover:bg-slate-800 rounded-lg transition"
+          className="h-8 w-8 p-0 text-gray-400 group-hover:text-white hover:bg-slate-800 rounded-lg transition"
         >
           {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
         </Button>
@@ -96,23 +96,23 @@ const CommentsSection = ({ animeId, animeTitle, episodeNumber }: Props) => {
         <div className="flex flex-col gap-6 pt-2">
           {/* Post Comment Input Form */}
           {auth ? (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3 glass-panel p-4 rounded-2xl border border-white/10 shadow-lg">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3 bg-[#0f172a] p-4 rounded-xl border border-slate-800 shadow-sm">
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Share your thoughts about this episode..."
                 rows={3}
-                className="w-full bg-slate-900/90 text-white placeholder-slate-500 rounded-xl p-3 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-400/50 border border-white/10 transition resize-none"
+                className="w-full bg-slate-900/90 text-white placeholder-gray-500 rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#e9376b] border border-slate-800 transition resize-none"
               />
 
               <div className="flex items-center justify-between">
-                <label htmlFor="spoil-checkbox" className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                <label htmlFor="spoil-checkbox" className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
                   <input
                     id="spoil-checkbox"
                     type="checkbox"
                     checked={spoil}
                     onChange={(e) => setSpoil(e.target.checked)}
-                    className="h-4 w-4 rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-cyan-500"
+                    className="h-4 w-4 rounded bg-slate-900 border-slate-700 text-[#e9376b] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#e9376b]"
                   />
                   <span className="flex items-center gap-1">
                     <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" /> Contains Spoilers
@@ -121,17 +121,17 @@ const CommentsSection = ({ animeId, animeTitle, episodeNumber }: Props) => {
 
                 <Button
                   type="submit"
-                  disabled={addCommentMutation.isLoading || !content.trim()}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold px-4 h-8 rounded-xl flex items-center gap-1.5 transition disabled:opacity-50 shadow-md shadow-cyan-500/20"
+                  disabled={addCommentMutation.isPending || !content.trim()}
+                  className="bg-[#e9376b] hover:bg-[#e9376b]/90 text-white text-xs font-bold px-4 h-8 rounded-lg flex items-center gap-1.5 transition disabled:opacity-50"
                 >
                   <Send className="h-3.5 w-3.5" />
-                  {addCommentMutation.isLoading ? "Posting..." : "Post Comment"}
+                  {addCommentMutation.isPending ? "Posting..." : "Post Comment"}
                 </Button>
               </div>
             </form>
           ) : (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 glass-panel rounded-2xl border border-white/10 text-sm">
-              <p className="text-slate-400 text-xs sm:text-sm">Join the discussion! Log in to share comments with the community.</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-[#0f172a] rounded-xl border border-slate-800 text-sm">
+              <p className="text-gray-400 text-xs sm:text-sm">Join the discussion! Log in to share comments with the community.</p>
               <LoginPopoverButton />
             </div>
           )}
@@ -221,7 +221,7 @@ const CommentsSection = ({ animeId, animeTitle, episodeNumber }: Props) => {
                   >
                     {isFetchingNextPage ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin text-cyan-400" /> Loading...
+                        <Loader2 className="h-4 w-4 animate-spin text-[#e9376b]" /> Loading...
                       </>
                     ) : (
                       "Load More Comments"

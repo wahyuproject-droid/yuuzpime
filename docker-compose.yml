@@ -1,16 +1,28 @@
 services:
-  miru:
-    build: .
+  kitsune:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kitsune:latest
+    container_name: kitsune
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_PROXY_URL=/api/proxy
       - NEXT_PUBLIC_POCKETBASE_URL=http://localhost:8090
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
 
-  proxy:
-    image: dovakiin0/proxy-m3u8:latest
+  redis:
+    image: redis:8-alpine
+    container_name: kitsune-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save "" --appendonly no
     ports:
-      - "4040:4040"
-    environment:
-      - PORT=4040
-      - CORS_DOMAIN=http://localhost:3000
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

@@ -26,7 +26,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env
 .env*.local
 
 # vercel
@@ -42,7 +41,13 @@ next-env.d.ts
 graphify-out/
 GEMINI.md
 .gemini
-
-# PWA service worker files
-public/sw.js*
-public/workbox-*.js*
+.agents/
+.codegraph/
+.specify/
+specs/
+**/.cache/
+companion/dist/
+companion/kitsune-companion*
+companion/*.syso
+companion/*.icns
+*.exe

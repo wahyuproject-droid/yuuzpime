@@ -88,21 +88,18 @@ const AnimeEpisodes = ({ animeId }: Props) => {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row w-full items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-cyan-400 to-blue-600 shadow-sm shadow-cyan-500/50" />
-          <h3 className="text-xl font-bold text-white tracking-wide">Episodes</h3>
-        </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+      <div className="flex w-full items-center justify-between">
+        <h3 className="text-xl font-semibold">Episodes</h3>
+        <div className="flex items-center gap-2">
           {ranges.length > 0 && (
             <Select onValueChange={handleRangeChange} value={selectedRange}>
-              <SelectTrigger className="w-[140px] sm:w-[160px] glass-panel border border-white/10 rounded-xl text-xs font-semibold">
+              <SelectTrigger className="w-[180px]">
                 <SelectValue
                   className="text-white"
                   placeholder="Select Range"
                 />
               </SelectTrigger>
-              <SelectContent className="glass-panel border border-white/10 rounded-xl">
+              <SelectContent>
                 <SelectGroup>
                   {ranges.map((range) => (
                     <SelectItem key={range} value={range}>
@@ -113,11 +110,11 @@ const AnimeEpisodes = ({ animeId }: Props) => {
               </SelectContent>
             </Select>
           )}
-          <div className="relative flex-1 sm:w-64 max-w-[21.875rem]">
-            <Search className="absolute inset-y-0 left-3 m-auto h-4 w-4 text-slate-400" />
+          <div className="relative max-w-[21.875rem] ">
+            <Search className="absolute inset-y-0 left-2 m-auto h-4 w-4" />
             <Input
-              placeholder="Search episode..."
-              className="w-full pl-9 text-xs glass-panel border border-white/10 rounded-xl text-white placeholder-slate-400 focus-visible:ring-cyan-400/50"
+              placeholder="Search for episode..."
+              className=" w-full pl-8 text-white border-white"
               onChange={handleSearch}
             />
           </div>
@@ -133,8 +130,8 @@ const AnimeEpisodes = ({ animeId }: Props) => {
           />
         ))}
         {!episodes.length && !isLoading && (
-          <div className="col-span-full flex items-center justify-center py-12 glass-panel rounded-2xl border border-white/10 text-slate-400 text-sm font-medium">
-            No Episodes Available
+          <div className="lg:col-span-5 col-span-2 sm:col-span-3 md:col-span-4 xl:col-span-6 2xl:col-span-7 flex items-center justify-center py-10 bg-slate-900 rounded-md">
+            No Episodes
           </div>
         )}
         {isLoading &&
@@ -142,7 +139,7 @@ const AnimeEpisodes = ({ animeId }: Props) => {
             <div
               key={idx}
               className={cn([
-                "h-[5.25rem] rounded-xl cursor-pointer w-full flex items-center justify-center animate-pulse bg-slate-800/60 border border-white/5",
+                "h-[6.25rem] rounded-lg cursor-pointer w-full flex items-center justify-center animate-pulse bg-slate-800",
                 "self-center justify-self-center",
               ])}
             ></div>

@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Input } from "./ui/input";
-import { SearchIcon, SlidersHorizontal, ArrowRight } from "lucide-react";
+import { SearchIcon, SlidersHorizontal } from "lucide-react";
 import useDebounce from "@/hooks/use-debounce";
 import { useSearchAnime } from "@/query/search-anime";
 import Image from "next/image";
@@ -9,6 +9,7 @@ import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import Tooltip from "./common/tooltip";
 
 const SearchBar = ({
   className,
@@ -19,22 +20,28 @@ const SearchBar = ({
 }) => {
   const [searchValue, setSearchValue] = useState<string>("");
   const [isFocused, setIsFocused] = useState<boolean>(false);
-  const debouncedValue = useDebounce(searchValue, 350);
-  const resultsRef = useRef<HTMLDivElement | null>(null);
+  const debouncedValue = useDebounce(searchValue, 300);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
   const { data: searchResults, isLoading } = useSearchAnime(debouncedValue);
 
-  const handleBlur = () => {
-    setTimeout(() => {
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (
-        resultsRef.current &&
-        !resultsRef.current.contains(document.activeElement)
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
       ) {
         setIsFocused(false);
       }
-    }, 150);
-  };
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
 
   const handleAnimeClick = () => {
     setSearchValue("");
@@ -46,7 +53,7 @@ const SearchBar = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchValue.trim()) {
-      router.push(`${ROUTES.SEARCH}?q=${encodeURIComponent(searchValue)}`);
+      router.push(`${ROUTES.SEARCH}?q=${encodeURIComponent(searchValue.trim())}`);
       setIsFocused(false);
       if (onAnimeClick) {
         onAnimeClick();
@@ -56,98 +63,146 @@ const SearchBar = ({
   };
 
   return (
-    <div className={cn(["relative w-full min-h-fit", className])}>
-      <div className="relative flex items-center w-full">
-        <SearchIcon
-          suppressHydrationWarning
-          className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none"
-        />
-        <Input
-          className="w-full h-10 pl-10 pr-10 text-sm text-white bg-[#0d121d]/90 border-white/10 rounded-xl focus-visible:ring-1 focus-visible:ring-indigo-500 placeholder:text-slate-500 shadow-inner"
-          placeholder="Search anime, movies, genres..."
-          onChange={(e) => setSearchValue(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={handleBlur}
-          value={searchValue}
-          onKeyDown={handleKeyDown}
-        />
-        <Button
-          size="icon"
-          variant="ghost"
-          className="absolute right-1.5 h-7 w-7 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg"
-          onClick={() => {
-            router.push(ROUTES.SEARCH + '?q=""');
-          }}
-          title="Filter and Catalog"
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-
-      {isFocused && searchValue.trim() && (
+    <div ref={containerRef} className={cn(["relative w-full min-h-fit", className])}>
+      <SearchIcon suppressHydrationWarning className="absolute inset-y-0 left-2 m-auto h-4 w-4" />
+      <Input
+        className="w-full h-10 pl-8 text-white border-white"
+        placeholder="Enter your keywords to search..."
+        onChange={(e) => setSearchValue(e.target.value)}
+        onFocus={() => setIsFocused(true)}
+        value={searchValue}
+        onKeyDown={handleKeyDown}
+      />
+      <Button
+        variant="secondary"
+        className="absolute text-white right-2 top-1/2 -translate-y-1/2 h-2/3"
+        onClick={() => {
+          router.push(ROUTES.SEARCH + '?q=""');
+        }}
+      >
+        <Tooltip side="bottom" content="Filter">
+          <SlidersHorizontal suppressHydrationWarning className="h-4 w-4" />
+        </Tooltip>
+      </Button>
+      {isFocused && searchValue && (
         <div
-          ref={resultsRef}
-          className="absolute left-0 right-0 top-[115%] z-[150] max-h-[60vh] overflow-y-auto p-2.5 rounded-2xl bg-[#0b0f19]/95 backdrop-blur-2xl border border-white/10 shadow-2xl flex flex-col gap-2"
+          className="absolute w-full max-h-[40vh] hidden lg:flex overflow-y-auto flex-col gap-5 px-5 py-5 bg-secondary top-[110%] rounded-md z-50 shadow-2xl border border-white/10"
         >
-          {isLoading && (
-            <div className="p-4 text-center text-xs text-slate-400">
-              Searching anime...
-            </div>
-          )}
+          <div className="grid grid-cols-1 gap-2">
+            {(isLoading || (!searchResults && !!debouncedValue)) &&
+              [1, 2, 3, 4].map((_, idx) => {
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 rounded-md p-2 bg-slate-700 animate-pulse"
+                  >
+                    <div className="min-h-[6.25rem] min-w-[5rem] overflow-hidden rounded-md"></div>
+                  </div>
+                );
+              })}
 
-          {!isLoading && (!searchResults || searchResults.length === 0) && (
-            <div className="p-4 text-center text-xs text-slate-400">
-              No results found for &ldquo;{searchValue}&rdquo;
-            </div>
-          )}
+            {!isLoading && searchResults && searchResults.length === 0 && (
+              <p className="text-sm text-gray-400 py-4 text-center">No anime found</p>
+            )}
 
-          {searchResults?.slice(0, 8).map((anime) => (
-            <Link
-              key={anime.id}
-              href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}
-              onClick={handleAnimeClick}
-              className="flex items-center gap-3 p-2 rounded-xl hover:bg-indigo-600/15 transition-all group"
-            >
-              <div className="h-14 w-10 relative overflow-hidden rounded-lg shrink-0 bg-slate-900 border border-white/5">
-                <Image
-                  src={anime.poster}
-                  alt={anime.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform"
-                  sizes="40px"
-                  unoptimized
-                />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <h4 className="text-xs font-bold text-white line-clamp-1 group-hover:text-indigo-300 transition-colors">
-                  {anime.name || anime.jname}
-                </h4>
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-1">
-                  {anime.type && (
-                    <span className="px-1.5 py-0.5 rounded bg-white/5 text-slate-300 font-semibold">
-                      {anime.type}
-                    </span>
-                  )}
-                  {anime.moreInfo?.slice(0, 2).map((info, idx) => (
-                    <span key={idx}>• {info}</span>
-                  ))}
+            {searchResults?.map((anime) => (
+              <Link key={anime.id} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
+                <div
+                  className="flex items-start gap-4 hover:bg-[#121212] rounded-md p-2 cursor-pointer"
+                  onClick={handleAnimeClick}
+                >
+                  <div className="h-[6.25rem] w-[5rem] overflow-hidden rounded-md flex-shrink-0">
+                    <Image
+                      src={anime.poster}
+                      alt={anime.name}
+                      height={100}
+                      width={100}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <h3 className="line-clamp-2 text-sm">
+                      {anime.name || anime.jname}
+                    </h3>
+                    <div>
+                      <div className="text-sm">{anime.type}</div>
+                      <p className="text-xs text-gray-300">
+                        {anime.moreInfo?.join(", ")}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-
-          {searchResults && searchResults.length > 0 && (
+              </Link>
+            ))}
             <Link
+              className="w-full"
               href={`${ROUTES.SEARCH}?q=${encodeURIComponent(searchValue)}`}
               onClick={handleAnimeClick}
-              className="mt-1"
             >
-              <Button className="w-full h-8 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:from-indigo-600 hover:to-violet-700 transition-all flex items-center justify-center gap-1.5">
-                <span>View All Results</span>
-                <ArrowRight className="h-3.5 w-3.5" />
+              <Button className="w-full bg-[#e9376b] text-white">
+                Show More
               </Button>
             </Link>
-          )}
+          </div>
+        </div>
+      )}
+
+      {isFocused && searchValue && (
+        <div
+          className="absolute w-full h-fit max-h-[50vh] overflow-y-auto lg:hidden flex flex-col gap-2 px-2 py-2 bg-secondary top-[110%] rounded-md z-50 shadow-2xl border border-white/10"
+        >
+          <div className="flex flex-col gap-1">
+            {(isLoading || (!searchResults && !!debouncedValue)) &&
+              [1, 2, 3, 4, 5].map((_, idx) => {
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 rounded-md p-2 bg-slate-700 animate-pulse"
+                  >
+                    <div className="min-h-[2.25rem] min-w-[1.875rem] overflow-hidden rounded-md"></div>
+                  </div>
+                );
+              })}
+
+            {!isLoading && searchResults && searchResults.length === 0 && (
+              <p className="text-sm text-gray-400 py-3 text-center">No anime found</p>
+            )}
+
+            {searchResults?.slice(0, 5).map((anime) => (
+              <Link key={anime.id} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
+                <div
+                  className="flex items-center gap-2 hover:bg-[#121212] rounded-md p-1 cursor-pointer"
+                  onClick={handleAnimeClick}
+                >
+                  <div className="h-[2.5rem] w-[1.875rem] overflow-hidden rounded-md flex-shrink-0">
+                    <Image
+                      src={anime.poster}
+                      alt={anime.name}
+                      height={100}
+                      width={100}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 text-sm overflow-hidden">
+                    <h3 className="truncate">{anime.name || anime.jname}</h3>
+                    <div>
+                      <div className="text-xs text-gray-400">{anime.type}</div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+
+            <Link
+              className="w-full mt-1"
+              href={`${ROUTES.SEARCH}?q=${encodeURIComponent(searchValue)}`}
+              onClick={handleAnimeClick}
+            >
+              <Button size="sm" className="w-full bg-[#e9376b] text-white">
+                Show More
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
     </div>

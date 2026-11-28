@@ -1,80 +1,69 @@
-"use client";
-
-import React, { useMemo, useState } from "react";
 import Container from "./container";
+import React, { useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useGetAnimeSchedule } from "@/query/get-anime-schedule";
-import { Button } from "./ui/button";
+import Button from "./common/custom-button";
 import Link from "next/link";
 import Image from "next/image";
 import { ROUTES } from "@/constants/routes";
-import { Clock, Play, Calendar } from "lucide-react";
+import { Badge } from "./ui/badge";
+import { Clock, Play } from "lucide-react";
 
 function AnimeSchedule() {
-  const currentDate = useMemo(() => new Date(), []);
-  const currentDay = useMemo(
-    () =>
-      currentDate.toLocaleString("en-US", { weekday: "long" }).toLowerCase(),
-    [currentDate],
-  );
-  const daysOfWeek = useMemo(
-    () => [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ],
-    [],
-  );
-  const [currentSelectedTab, setCurrentSelectedTab] = useState<string>(currentDay);
+  const currentDate = new Date();
+  const baseDays = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ];
+  const currentDayIndex = currentDate.getDay();
+  const daysOfWeek = [
+    ...baseDays.slice(currentDayIndex),
+    ...baseDays.slice(0, currentDayIndex),
+  ];
+  const currentDay = daysOfWeek[0];
+  const [currentSelectedTab, setCurrentSelectedTab] =
+    React.useState<string>(currentDay);
 
-  const defaultTab = daysOfWeek.includes(currentDay) ? currentDay : "monday";
-
-  // Map JS Sunday (0) to 6, Monday (1) to 0
-  const currentDayOfWeek = (currentDate.getDay() + 6) % 7;
-
-  const getDateForWeekday = (targetDay: string) => {
-    const targetIndex = daysOfWeek.indexOf(targetDay);
-    const date = new Date(currentDate);
-    const diff = targetIndex - currentDayOfWeek;
-    date.setDate(currentDate.getDate() + diff);
-    return date;
-  };
+  const defaultTab = currentDay;
 
   const selectedDate = useMemo(() => {
     const date = getDateForWeekday(currentSelectedTab);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }, [currentSelectedTab, currentDayOfWeek]);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }, [currentSelectedTab]);
 
   const { isLoading, data } = useGetAnimeSchedule(selectedDate);
 
+  function getDateForWeekday(targetDay: string) {
+    const offset = Math.max(0, daysOfWeek.indexOf(targetDay));
+    const date = new Date(currentDate);
+    date.setDate(currentDate.getDate() + offset);
+    return date;
+  }
+
   return (
-    <Container className="py-8 md:py-12 flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-cyan-400 shrink-0" />
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-indigo-400" />
-          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-            Airing Schedule
-          </h2>
-        </div>
+    <Container className="flex flex-col gap-6 py-10 items-start">
+      <div className="flex flex-col gap-1">
+        <h5 className="text-2xl md:text-3xl font-bold text-white">Estimated Schedule</h5>
+        <p className="text-sm text-gray-400">Track upcoming episode releases for this week</p>
       </div>
 
       <Tabs
+        orientation="vertical"
         defaultValue={defaultTab}
         onValueChange={(val) => setCurrentSelectedTab(val)}
         value={currentSelectedTab}
-        className="w-full flex flex-col lg:flex-row gap-6"
+        className="w-full flex flex-col md:flex-row gap-6"
       >
-        {/* Days of Week Tab Rail */}
-        <TabsList className="flex flex-row lg:flex-col justify-start items-stretch gap-1.5 w-full lg:w-56 shrink-0 h-full p-1.5 bg-[#0d121d] border border-white/10 rounded-2xl overflow-x-auto no-scrollbar">
+        {/* Vertical Tabs List */}
+        <TabsList className="flex flex-row md:flex-col justify-start items-stretch gap-2 w-full md:w-56 shrink-0 h-auto md:h-fit border-none overflow-x-auto no-scrollbar bg-secondary/30 p-2 rounded-xl border border-slate-800/80">
           {daysOfWeek.map((day) => {
             const dateObj = getDateForWeekday(day);
             const isToday = day === currentDay;
@@ -83,13 +72,13 @@ function AnimeSchedule() {
               <TabsTrigger
                 key={day}
                 value={day}
-                className="shrink-0 flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-all duration-200 text-slate-400 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-violet-600 data-[state=active]:text-white hover:text-white hover:bg-white/5"
+                className="shrink-0 flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all data-[state=active]:bg-[#e9376b] data-[state=active]:text-white hover:bg-slate-800/60"
               >
                 <div className="flex flex-col items-start">
-                  <span className="font-bold text-xs uppercase tracking-wider">
+                  <span className="font-bold text-sm uppercase tracking-wider">
                     {day}
                   </span>
-                  <span className="text-[10px] opacity-75">
+                  <span className="text-[11px] opacity-75">
                     {dateObj.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -97,9 +86,9 @@ function AnimeSchedule() {
                   </span>
                 </div>
                 {isToday && (
-                  <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-bold">
-                    TODAY
-                  </span>
+                  <Badge className="bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 text-[10px] ml-2">
+                    Today
+                  </Badge>
                 )}
               </TabsTrigger>
             );
@@ -113,81 +102,70 @@ function AnimeSchedule() {
           ) : (
             daysOfWeek.map((day) => (
               <TabsContent key={day} value={day} className="mt-0">
-                {day === currentSelectedTab &&
-                  (data?.scheduledAnimes && data.scheduledAnimes.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 w-full">
-                      {data.scheduledAnimes.map((anime, idx) => {
-                        const timeFormatted = new Date(
-                          anime.airingTimestamp,
-                        ).toLocaleTimeString("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        });
+                {day === currentSelectedTab && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                    {data?.scheduledAnimes.map((anime, idx) => {
+                      const timeFormatted = new Date(
+                        anime.airingTimestamp,
+                      ).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      });
 
-                        return (
-                          <div
-                            key={`${anime.id}-${anime.episode}-${idx}`}
-                            className="flex flex-row gap-3.5 p-3 rounded-2xl bg-[#0d121d] border border-white/10 hover:border-indigo-500/40 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-200 group relative overflow-hidden"
-                          >
-                            {/* Small Poster Thumbnail */}
-                            {anime.poster ? (
-                              <div className="h-24 w-16 shrink-0 overflow-hidden rounded-xl relative bg-slate-900 border border-white/5">
-                                <Image
-                                  src={anime.poster}
-                                  alt={anime.name}
-                                  fill
-                                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                  unoptimized
-                                />
-                              </div>
-                            ) : (
-                              <div className="h-24 w-16 shrink-0 bg-slate-900 rounded-xl flex items-center justify-center">
-                                <Clock className="h-6 w-6 text-slate-500" />
-                              </div>
-                            )}
+                      return (
+                        <div
+                          key={`${anime.id}-${anime.episode}-${idx}`}
+                          className="flex flex-row gap-3 p-3 bg-secondary/40 border border-slate-800/60 hover:border-slate-700 rounded-xl hover:bg-secondary/70 transition group relative overflow-hidden"
+                        >
+                          {/* Small Poster Thumbnail */}
+                          {anime.poster ? (
+                            <div className="h-24 w-16 shrink-0 overflow-hidden rounded-lg relative bg-slate-800">
+                              <Image
+                                src={anime.poster}
+                                alt={anime.name}
+                                fill
+                                className="object-cover group-hover:scale-105 transition duration-300"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-24 w-16 shrink-0 bg-slate-800 rounded-lg flex items-center justify-center">
+                              <Clock className="h-6 w-6 text-gray-500" />
+                            </div>
+                          )}
 
-                            {/* Info Column */}
-                            <div className="flex flex-col justify-between flex-1 min-w-0 py-0.5">
-                              <div className="flex flex-col gap-1">
-                                <span className="text-[11px] text-cyan-400 flex items-center gap-1 font-semibold">
-                                  <Clock className="h-3 w-3" />
-                                  {timeFormatted}
-                                </span>
-                                <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug group-hover:text-indigo-300 transition-colors">
-                                  {anime.name}
-                                </h3>
-                              </div>
+                          {/* Info Column */}
+                          <div className="flex flex-col justify-between flex-1 min-w-0 py-0.5">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs text-gray-400 flex items-center gap-1 font-medium">
+                                <Clock className="h-3 w-3 text-[#e9376b]" />
+                                {timeFormatted}
+                              </span>
+                              <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug">
+                                {anime.name}
+                              </h3>
+                            </div>
 
-                              <div className="flex items-center justify-between gap-2 mt-2">
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                                  Ep {anime.episode}
-                                </span>
-                                <Link href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}>
-                                  <Button
-                                    size="sm"
-                                    className="h-7 text-xs bg-slate-800 hover:bg-indigo-600 text-white px-3 rounded-lg flex items-center gap-1.5 transition-all duration-200 font-semibold"
-                                  >
-                                    <Play className="h-3 w-3 fill-current" /> Details
-                                  </Button>
-                                </Link>
-                              </div>
+                            <div className="flex items-center justify-between gap-2 mt-2">
+                              <Badge className="bg-[#e9376b]/20 text-[#e9376b] border border-[#e9376b]/40 text-[10px] px-2 py-0.5">
+                                Ep {anime.episode}
+                              </Badge>
+                              <Link href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}>
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs bg-slate-800 hover:bg-[#e9376b] text-white px-2.5 rounded-lg flex items-center gap-1 transition"
+                                >
+                                  <Play className="h-3 w-3 fill-current" /> Details
+                                </Button>
+                              </Link>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center min-h-[220px] rounded-2xl bg-[#0d121d] border border-white/5 p-8 text-center">
-                      <Clock className="h-8 w-8 text-slate-500 mb-2 opacity-60" />
-                      <p className="text-sm font-semibold text-slate-300">
-                        No scheduled anime for this day
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Check back later or browse other days of the week.
-                      </p>
-                    </div>
-                  ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </TabsContent>
             ))
           )}
@@ -199,12 +177,28 @@ function AnimeSchedule() {
 
 const LoadingSkeleton = () => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 w-full">
-      {Array.from({ length: 6 }).map((_, idx) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+      {[1, 2, 3, 4, 5, 6].map((idx) => (
         <div
           key={idx}
-          className="h-28 rounded-2xl bg-[#0d121d] border border-white/5 animate-pulse"
-        />
+          className="flex flex-row gap-3 p-3 bg-secondary/30 border border-slate-800/60 rounded-xl animate-pulse"
+        >
+          {/* Poster Skeleton */}
+          <div className="h-24 w-16 shrink-0 bg-slate-800 rounded-lg"></div>
+
+          {/* Lines Skeleton */}
+          <div className="flex flex-col justify-between flex-1 min-w-0 py-0.5">
+            <div className="flex flex-col gap-2">
+              <div className="h-3 w-16 bg-slate-800 rounded"></div>
+              <div className="h-4 w-4/5 bg-slate-800 rounded"></div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 mt-2">
+              <div className="h-5 w-12 bg-slate-800 rounded-full"></div>
+              <div className="h-7 w-16 bg-slate-800 rounded-lg"></div>
+            </div>
+          </div>
+        </div>
       ))}
     </div>
   );

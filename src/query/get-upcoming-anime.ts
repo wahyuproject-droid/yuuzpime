@@ -1,34 +1,24 @@
 import { api } from "@/lib/api";
-import { getAniListUpcoming } from "@/lib/anilist";
 import { MediaList, PaginatedResponse } from "@/types/miruro-api";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export const GET_UPCOMING_ANIME = "GET_UPCOMING_ANIME";
 
 const getUpcomingAnime = async (
   page = 1,
-  perPage = 14,
+  perPage = 20,
 ): Promise<PaginatedResponse<MediaList>> => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    try {
-      const res = await api.get<PaginatedResponse<MediaList>>("/upcoming", {
-        params: { page, per_page: perPage },
-      });
-      const data = res.data;
-      if (data && data.results) {
-        return {
-          ...data,
-          results: (data.results || []).filter((item) => !item.isAdult),
-        };
-      }
-    } catch {
-      // Fallback to AniList
-    }
-  }
-  return getAniListUpcoming(page, perPage);
+  const res = await api.get<PaginatedResponse<MediaList>>("/upcoming", {
+    params: { page, per_page: perPage },
+  });
+  const data = res.data;
+  return {
+    ...data,
+    results: (data.results || []).filter((item) => !item.isAdult),
+  };
 };
 
-export const useGetUpcomingAnime = (page = 1, perPage = 14) => {
+export const useGetUpcomingAnime = (page = 1, perPage = 20) => {
   return useQuery({
     queryFn: () => getUpcomingAnime(page, perPage),
     queryKey: [GET_UPCOMING_ANIME, page, perPage],

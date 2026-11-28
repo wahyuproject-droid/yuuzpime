@@ -1,26 +1,16 @@
 import { api } from "@/lib/api";
-import { getAniListAnimeRelations } from "@/lib/anilist";
 import { MediaList } from "@/types/miruro-api";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export const GET_ANIME_RELATIONS = "GET_ANIME_RELATIONS";
 
 const getAnimeRelations = async (anilistId: string): Promise<MediaList[]> => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    try {
-      const res = await api.get<{ results: MediaList[] } | MediaList[]>(
-        `/anime/${anilistId}/relations`,
-      );
-      const data = res.data;
-      const list = Array.isArray(data) ? data : data?.results || [];
-      if (list.length > 0) {
-        return list.filter((item) => !item.isAdult);
-      }
-    } catch {
-      // Fallback to AniList
-    }
-  }
-  return getAniListAnimeRelations(anilistId);
+  const res = await api.get<{ results: MediaList[] } | MediaList[]>(
+    `/anime/${anilistId}/relations`,
+  );
+  const data = res.data;
+  const list = Array.isArray(data) ? data : data.results || [];
+  return list.filter((item) => !item.isAdult);
 };
 
 export const useGetAnimeRelations = (anilistId: string) => {

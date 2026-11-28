@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Container from "./container";
 import AnimeCard from "./anime-card";
 import { ROUTES } from "@/constants/routes";
+import BlurFade from "./ui/blur-fade";
 import { IAnime } from "@/types/anime";
 import { History } from "lucide-react";
 import useBookMarks, { WatchHistory } from "@/hooks/use-get-bookmark";
@@ -41,23 +42,23 @@ const ContinueWatching = (props: Props) => {
           return;
         }
 
-        const animes = watchedAnimes.reverse().map((item) => ({
-          id: item.anime.id,
-          name: item.anime.title,
-          poster: item.anime.poster,
-          episode: item.episodes[item.episodes.length - 1],
+        const animes = watchedAnimes.reverse().map((anime) => ({
+          id: anime.anime.id,
+          name: anime.anime.title,
+          poster: anime.anime.poster,
+          episode: anime.episodes[anime.episodes.length - 1],
         }));
         setAnime(animes as WatchedAnime[]);
       }
     } else {
       if (bookmarks && bookmarks.length > 0) {
         const animes = bookmarks
-          .map((item) => ({
-            id: item.animeId,
-            name: item.animeTitle,
-            poster: item.thumbnail,
-            episode: item.expand?.watchHistory
-              ? item.expand.watchHistory.sort(
+          .map((anime) => ({
+            id: anime.animeId,
+            name: anime.animeTitle,
+            poster: anime.thumbnail,
+            episode: anime.expand?.watchHistory
+              ? anime.expand.watchHistory.sort(
                   (a, b) => b.episodeNumber - a.episodeNumber,
                 )[0]
               : null,
@@ -72,36 +73,30 @@ const ContinueWatching = (props: Props) => {
   }, [auth, bookmarks]);
 
   if (props.loading) return <LoadingSkeleton />;
-  if (!anime || !anime.length) return null;
+
+  if ((!anime || !anime.length) && !props.loading) return <></>;
 
   return (
-    <Container className="py-8 md:py-12 flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-cyan-400 to-indigo-500 shrink-0" />
-        <div className="flex items-center gap-2">
-          <History className="h-5 w-5 text-cyan-400" />
-          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-            Continue Watching
-          </h2>
-        </div>
+    <Container className="flex flex-col gap-5 py-10 items-center lg:items-start">
+      <div className="flex items-center gap-2">
+        <History />
+        <h5 className="text-2xl font-bold">Continue Watching</h5>
       </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3.5 sm:gap-4 md:gap-5 w-full">
-        {anime.map(
+      <div className="grid lg:grid-cols-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-5 content-center">
+        {anime?.map(
           (ani, idx) =>
             ani.episode && (
-              <div key={`${ani.id}-${idx}`} className="w-full">
+              <BlurFade key={idx} delay={idx * 0.05} inView>
                 <AnimeCard
                   title={ani.name}
                   poster={ani.poster}
-                  href={`${ROUTES.WATCH}?anime=${ani.id}&ep=${
-                    typeof ani.episode !== "string" ? ani.episode.episodeNumber : 1
-                  }`}
+                  className="self-center justify-self-center"
+                  href={`${ROUTES.WATCH}?anime=${ani.id}&ep=${typeof ani.episode !== "string" ? ani.episode.episodeNumber : 1}`}
                   watchDetail={
                     typeof ani.episode !== "string" ? ani.episode : null
                   }
                 />
-              </div>
+              </BlurFade>
             ),
         )}
       </div>
@@ -111,18 +106,17 @@ const ContinueWatching = (props: Props) => {
 
 const LoadingSkeleton = () => {
   return (
-    <Container className="py-8 md:py-12 flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <div className="w-1.5 h-6 rounded-full bg-slate-800 shrink-0" />
-        <div className="h-7 w-48 rounded-lg bg-slate-800/80 animate-pulse" />
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 w-full">
-        {Array.from({ length: 7 }).map((_, idx) => (
-          <div
-            key={idx}
-            className="aspect-[3/4.2] w-full rounded-2xl bg-slate-900/60 border border-white/5 animate-pulse"
-          />
-        ))}
+    <Container className="flex flex-col gap-5 py-10 items-center lg:items-start lg:mt-[10.125rem] z-20 ">
+      <div className="h-10 w-[15.625rem] animate-pulse bg-slate-700"></div>
+      <div className="grid lg:grid-cols-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-5 content-center">
+        {[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1].map((_, idx) => {
+          return (
+            <div
+              key={idx}
+              className="rounded-xl h-[15.625rem] min-w-[10.625rem] max-w-[12.625rem] md:h-[18.75rem] md:max-w-[12.5rem] animate-pulse bg-slate-700"
+            ></div>
+          );
+        })}
       </div>
     </Container>
   );

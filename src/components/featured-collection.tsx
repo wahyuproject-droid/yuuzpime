@@ -15,17 +15,10 @@ type Props = {
 
 const FeaturedCollection = ({ featuredAnime, loading }: Props) => {
   if (loading || !featuredAnime?.length) return <LoadingSkeleton />;
-
   return (
-    <Container className="py-8 md:py-12 flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0" />
-        <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-          Featured Collections
-        </h2>
-      </div>
-
-      <div className="grid w-full gap-6 lg:gap-6 xl:gap-8 grid-cols-1 lg:grid-cols-3">
+    <Container className="flex flex-col gap-5 items-center lg:items-start py-5">
+      <h5 className="text-2xl font-bold">Featured Collection</h5>
+      <div className="grid w-full gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {featuredAnime.map((category, idx) => (
           <FeaturedCollectionCard
             title={category.title}
@@ -40,28 +33,21 @@ const FeaturedCollection = ({ featuredAnime, loading }: Props) => {
 
 const LoadingSkeleton = () => {
   return (
-    <Container className="py-8 md:py-12 flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <div className="w-1.5 h-6 rounded-full bg-slate-800 shrink-0" />
-        <div className="h-7 w-48 rounded-lg bg-slate-800/80 animate-pulse" />
-      </div>
-      <div className="grid w-full gap-6 lg:gap-6 xl:gap-8 grid-cols-1 lg:grid-cols-3">
-        {[1, 2, 3].map((colIdx) => (
-          <div key={colIdx} className="flex flex-col gap-3.5 w-full">
-            <div className="h-5 w-36 rounded bg-slate-800/80 animate-pulse" />
-            <div className="grid grid-cols-3 gap-3 w-full">
-              {[1, 2, 3].map((cardIdx) => (
-                <div
-                  key={cardIdx}
-                  className="aspect-[3/4.2] w-full rounded-2xl bg-slate-900/60 border border-white/5 animate-pulse"
-                />
-              ))}
-            </div>
-          </div>
-        ))}
+    <Container className="flex flex-col gap-5 py-10 items-center lg:items-start ">
+      <div className="h-10 w-[15.625rem] animate-pulse bg-slate-700"></div>
+      <div className="grid w-full gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 1, 1].map((_, idx) => {
+          return (
+            <div
+              key={idx}
+              className="rounded-xl h-[15.625rem] w-[100%] md:h-[18.75rem] animate-pulse bg-slate-700"
+            ></div>
+          );
+        })}
       </div>
     </Container>
   );
 };
 
 export default FeaturedCollection;
+

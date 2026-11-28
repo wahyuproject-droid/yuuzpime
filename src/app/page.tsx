@@ -43,19 +43,19 @@ export default function Home() {
   // Store first 3 records into dedicated variables so pagination page changes in other sections don't re-trigger FeaturedCollection
   const featuredFavoriteList = useMemo(
     () => popularList.slice(0, 3),
-    [popularList],
+    [popularList.length > 0 ? popularList[0]?.id : null],
   );
   const featuredPopularList = useMemo(
     () => popularList.slice(3, 6),
-    [popularList],
+    [popularList.length > 0 ? popularList[0]?.id : null],
   );
   const featuredRecentList = useMemo(
     () => recentList.slice(0, 3),
-    [recentList],
+    [recentList.length > 0 ? recentList[0]?.id : null],
   );
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col bg-[#121212]">
       <HeroSection
         spotlightAnime={spotlightList}
         isDataLoading={isLoadingSpotlight}
@@ -92,9 +92,9 @@ export default function Home() {
         onPageChange={(p) => setTrendingPage(p)}
       />
 
+
+
       <AnimeSchedule />
-
-
 
       <AnimeSections
         title="Upcoming Animes"

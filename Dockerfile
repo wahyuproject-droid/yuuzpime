@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:24.22.1-alpine AS base
 
 # 1. Install dependencies only when needed
 FROM base AS deps
@@ -25,9 +25,11 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-LABEL org.opencontainers.image.title="Miru" \
-  org.opencontainers.image.description="Modern, ad-free anime streaming web application" \
-  org.opencontainers.image.source="https://github.com/miru-web/miru-web"
+RUN apk add --no-cache curl
+
+LABEL org.opencontainers.image.title="Kitsune" \
+  org.opencontainers.image.source="https://github.com/dovakiin0/Kitsune.git" \
+  org.opencontainers.image.vendor="kitsunee.moe"
 
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
@@ -40,5 +42,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static/ ./.next/static/
 USER nextjs
 
 EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]

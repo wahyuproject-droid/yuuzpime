@@ -27,24 +27,21 @@ const AnimeCarousel = (props: Props) => {
   return (
     <div className={cn(["flex flex-col gap-5", props.className])}>
       <div className="w-full flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-cyan-400 to-blue-600 shadow-sm shadow-cyan-500/50" />
-          <h5 className="text-xl md:text-2xl font-bold text-white tracking-wide">{props.title}</h5>
-        </div>
-        <div className="flex items-center gap-2">
+        <h5 className="text-2xl font-bold">{props.title}</h5>
+        <div className="flex items-center gap-5">
           <Button
             onClick={() => {
               api?.scrollPrev();
             }}
-            className="rounded-full glass-panel border border-white/10 h-9 w-9 p-0 hover:border-cyan-400/50 hover:text-cyan-400 transition flex items-center justify-center text-slate-300"
+            className="rounded-full bg-transparent border border-white h-10 w-10 hover:bg-slate-500"
           >
-            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <ArrowLeft className="text-white shrink-0" />
           </Button>
           <Button
             onClick={() => api?.scrollNext()}
-            className="rounded-full glass-panel border border-white/10 h-9 w-9 p-0 hover:border-cyan-400/50 hover:text-cyan-400 transition flex items-center justify-center text-slate-300"
+            className="rounded-full bg-transparent border border-white h-10 w-10 hover:bg-slate-500"
           >
-            <ArrowRight className="h-4 w-4 shrink-0" />
+            <ArrowRight className="text-white shrink-0" />
           </Button>
         </div>
       </div>

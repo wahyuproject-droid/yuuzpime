@@ -1,108 +1,167 @@
-# YuuZPime
+# YuuZPime — Kitsune web edition
 
-Full Miru Web source replacement, uploaded archive revision 15dd1b636d15f7bf740a4f768463a09c10411dda. Modified by YuuZ, original MIT attribution Dovakiin0 retained. Guest-only, neutral theme, local history source retained. Original player implementation retained but unverified video providers and open proxy not enabled. No Manga Hub in upstream. Node 22, npm install, npm run build. [SociaBuzz](https://sociabuzz.com/yuuzdisini).
+Verified original 214-file Kitsune archive. Original components and source retained with guest branding and a direct ArtPlayer/HLS watch page for authorized media. Provider routes and Companion bypass disabled; no bundled streaming catalog. MIT attribution retained. Node 22, npm ci, npm run build.
 
----
+![logo.png](logo.png)
 
-<p align="center">
-  <img src="public/miru-logo.svg" alt="Miru Logo" width="120" height="120" />
-</p>
+# Kitsune
 
-<h1 align="center">Miru (見る)</h1>
+Watch your favourite anime anywhere, anytime. No ads, no popups.
 
-<p align="center">
-  <strong>Watch your favourite anime anywhere, anytime. Fast, modern, and ad-free.</strong>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js" alt="Next.js" />
-  <img src="https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react" alt="React" />
-  <img src="https://img.shields.io/badge/TailwindCSS-3.4-38bdf8?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
-</p>
+Kitsune is a modern, open-source anime streaming web application built with [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/), and [shadcn/ui](https://ui.shadcn.com/).
 
 ---
 
-## 🌟 Highlights & Features
+## Features
 
-- 🚫 **Ad-Free Experience**: No popups, redirects, or intrusive ads.
-- ⚡ **Standalone & Hybrid Architecture**:
-  - Connects directly to **AniList GraphQL** out of the box for discovery, trending titles, anime details, relations, search, and release schedules.
-  - Optional compatibility with external scrapers/APIs via `NEXT_PUBLIC_API_URL`.
-- 🎬 **Multi-Provider Video Player**:
-  - High-performance HLS streaming with **ArtPlayer**, ambient glow (ambilight), auto-skip intros/outros, and subtitle control.
-  - Built-in multi-server fallback engine (Megaplay, VidLink, Autoembed) so playback never fails.
-  - Internal Next.js proxy route (`/api/proxy`) to rewrite and stream m3u8 playlists without CORS roadblocks.
-- 📱 **PWA Ready**: Installable as a Progressive Web App on mobile (iOS/Android) and desktop.
-- 🔖 **Watch Tracking**: Local browser continue-watching history support with optional PocketBase cloud account synchronization.
+- **Ad-Free Experience**: No popups, redirects, or third-party ads.
+- **PWA Ready**: Installable as a Progressive Web App on mobile and desktop.
+- **Rich Anime Discovery**: Explore trending, popular, seasonal anime, search suggestions, and filters powered by AniList.
+- **Advanced Player**: Integrated ArtPlayer with custom HLS playback, audio/subtitles selector, and auto-skip for intro/outro.
+- **User Profiles & Sync**: Bookmarks and watch progress tracking powered by [PocketBase](https://pocketbase.io).
+- **Kitsune Companion**: Lightweight optional desktop helper to bypass ISP restrictions and CORS blocking.
 
 ---
 
-## 🚀 Quick Start
+## Prerequisites
 
-### Prerequisites
+- **Node.js**: `v20.x` or later (Node 20+ recommended)
+- **PocketBase**: For user authentication, bookmarks, and watch history
+- **(Optional) Redis**: For faster caching of AniList metadata and video manifests (in-memory cache is used if omitted)
+- **(Optional) Go**: `1.22+` if you want to run or build the Kitsune Companion from source
 
-- [Node.js](https://nodejs.org/) (v18 or higher recommended)
-- `npm`, `pnpm`, or `bun`
+---
 
-### Installation
+## Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+| Variable                      | Required | Default                  | Description                                             |
+| ----------------------------- | -------- | ------------------------ | ------------------------------------------------------- |
+| `NEXT_PUBLIC_POCKETBASE_URL`  | Yes      | `http://localhost:8090`  | PocketBase instance URL                                 |
+| `REDIS_URL`                   | No       | _None_                   | Redis connection string (e.g. `redis://localhost:6379`) |
+| `NEXT_PUBLIC_LOCAL_PROXY_URL` | No       | `http://127.0.0.1:43210` | URL of the local Kitsune Companion                      |
+| `DOMAIN_URL`                  | No       | `localhost:3000`         | Host domain for OpenGraph cards                         |
+
+---
+
+## Running Locally
 
 1. **Clone the repository**:
+
    ```bash
-   git clone https://github.com/your-username/miru-web.git
-   cd miru-web
+   git clone https://github.com/dovakiin0/Kitsune.git
+   cd Kitsune
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
-3. **Configure Environment** (Optional):
-   Copy `.env.example` to `.env`:
+3. **Configure environment**:
+
    ```bash
    cp .env.example .env
    ```
-   *By default, Miru operates in standalone mode using AniList GraphQL and internal Next.js proxies. No external backend required.*
 
-4. **Run development server**:
+4. **Start the development server**:
    ```bash
    npm run dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🐳 Docker Deployment
+## PocketBase Setup
 
-You can run Miru with Docker Compose:
+Kitsune uses PocketBase to manage users, authentication, bookmarks, and watch history.
+
+1. Download and run [PocketBase](https://pocketbase.io/docs/):
+   ```bash
+   ./pocketbase serve --http="0.0.0.0:8090"
+   ```
+2. Open the Admin UI at `http://localhost:8090/_/` and create your superadmin account.
+3. In the PocketBase dashboard, navigate to **Settings > Import Collections**.
+4. Import the schema file located in [docs/pb.json](docs/pb.json).
+5. (Optional) Under **Settings > Auth Providers**, configure OAuth2 providers (Discord) if desired.
+
+---
+
+## Kitsune Companion
+
+The **Kitsune Companion** is an optional desktop utility that runs locally on your computer (`http://127.0.0.1:43210`). It routes video streams directly from your personal IP address, bypassing ISP blocks, Cloudflare challenges, and browser CORS limitations.
+
+The web app automatically detects when Companion is running.
+
+### Option A: Run from Source
+
+Requires [Go](https://go.dev/dl/) installed:
 
 ```bash
-docker compose up -d
+cd companion
+go run .
 ```
 
-Or build and run the container directly:
+To build a standalone executable:
 
 ```bash
-docker build -t miru-web .
-docker run -p 3000:3000 miru-web
+cd companion
+go build -o kitsune-companion .
+./kitsune-companion
 ```
 
----
+### Option B: Download Prebuilt Binary
 
-## ⚙️ Environment Variables
-
-| Variable | Description | Default |
-|---|---|---|
-| `NEXT_PUBLIC_API_URL` | Optional external API for custom anime scrapers | `""` (Uses direct AniList GraphQL) |
-| `NEXT_PUBLIC_PROXY_URL` | HLS video proxy URL | `/api/proxy` (Internal Next.js route) |
-| `NEXT_PUBLIC_POCKETBASE_URL` | Optional PocketBase URL for cloud user accounts | `http://localhost:8090` |
-| `NEXT_PUBLIC_GA_ID` | Optional Google Analytics measurement ID | `""` |
+Download the precompiled binary for Windows, macOS, or Linux from the [GitHub Releases](https://github.com/dovakiin0/Kitsune/releases/latest) page and run it. It runs in the system tray and includes a local web UI at `http://127.0.0.1:43210/ui`.
 
 ---
 
-## 📄 License
+## Docker Setup
 
-Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+### Option 1: Docker Compose (Recommended)
+
+Start Kitsune with an accompanying Redis instance:
+
+```bash
+docker compose up -d --build
+```
+
+Access the app at `http://localhost:3000`.
+
+### Option 2: Dockerfile Build
+
+1. **Build the container image**:
+
+   ```bash
+   docker build -t kitsune .
+   ```
+
+2. **Run the container**:
+   ```bash
+   docker run -p 3000:3000 \
+     -e NEXT_PUBLIC_POCKETBASE_URL="http://host.docker.internal:8090" \
+     kitsune
+   ```
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feat/my-feature`)
+3. Commit your changes (`git commit -m "feat: add feature"`)
+4. Push to the branch (`git push origin feat/my-feature`)
+5. Open a Pull Request
+
+---
+
+## Community & Support
+
+- Discord: [https://discord.gg/6yAJ3XDHTt](https://discord.gg/6yAJ3XDHTt)

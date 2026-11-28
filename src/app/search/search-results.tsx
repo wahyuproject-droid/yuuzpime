@@ -35,26 +35,26 @@ const SearchResults = () => {
   const [filters, setFilters] = React.useState<SearchAnimeParams>({
     q: params.q,
     page: params.page,
-    type: params.type,
-    status: params.status,
-    rated: params.rated,
-    season: params.season,
-    language: params.language,
-    sort: params.sort,
-    genres: params.genres,
+    type: params.type || "",
+    status: params.status || "",
+    rated: params.rated || "",
+    season: params.season || "",
+    language: params.language || "",
+    sort: params.sort || "",
+    genres: params.genres || "",
   });
 
   React.useEffect(() => {
     setFilters({
       q: params.q,
       page: params.page,
-      type: params.type,
-      status: params.status,
-      rated: params.rated,
-      season: params.season,
-      language: params.language,
-      sort: params.sort,
-      genres: params.genres,
+      type: params.type || "",
+      status: params.status || "",
+      rated: params.rated || "",
+      season: params.season || "",
+      language: params.language || "",
+      sort: params.sort || "",
+      genres: params.genres || "",
     });
   }, [params]);
 
@@ -83,13 +83,9 @@ const SearchResults = () => {
 
   const applyFilters = () => {
     const nextParams = new URLSearchParams();
+    const merged = { ...filters, q: params.q };
 
-    if (displayPhrase !== "") {
-      nextParams.set("q", displayPhrase);
-    }
-
-    Object.entries(filters).forEach(([key, value]) => {
-      if (key === "q" || key === "page") return;
+    Object.entries(merged).forEach(([key, value]) => {
       if (typeof value === "string" && value.trim() !== "") {
         nextParams.set(key, value);
       } else if (typeof value === "number" && !isNaN(value)) {
@@ -104,7 +100,7 @@ const SearchResults = () => {
 
   const resetFilters = () => {
     setFilters({
-      q: params.q || "",
+      q: params.q,
       page: 1,
       type: "",
       status: "",
@@ -114,20 +110,13 @@ const SearchResults = () => {
       sort: "",
       genres: "",
     });
-    if (params.q && params.q.trim() !== "") {
-      router.push(`/search?q=${encodeURIComponent(params.q)}`);
-    } else {
-      router.push('/search?q=""');
-    }
+    router.push(params.q ? `/search?q=${encodeURIComponent(params.q)}` : '/search?q=""');
   };
 
   return (
     <div className="flex flex-col gap-10 mt-28 lg:mt-36 pb-20 min-h-[75vh]">
-      <div className="glass-panel rounded-2xl p-6 border border-white/10 shadow-xl flex flex-col gap-6">
-        <div className="flex items-center gap-2.5">
-          <span className="w-1.5 h-5 rounded-full bg-gradient-to-b from-cyan-400 to-blue-600 shadow-sm shadow-cyan-500/50" />
-          <p className="text-lg font-bold text-white tracking-wide">Refine Catalog</p>
-        </div>
+      <div className="bg-slate-800/50 backdrop-blur-md border border-white/10 rounded-lg p-5 flex flex-col gap-5">
+        <p className="text-lg font-semibold">Filters</p>
         <div className="flex flex-wrap gap-3">
           <Select
             options={types}
@@ -167,10 +156,10 @@ const SearchResults = () => {
           />
         </div>
         <div>
-          <p className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3">Genres</p>
+          <p className="text-lg font-semibold mt-4">Genres</p>
           <ToggleGroup
             type="multiple"
-            className="flex flex-wrap justify-start gap-2"
+            className="flex flex-wrap justify-start gap-2 mt-4"
             value={filters.genres?.split(",") || []}
             onValueChange={(value) => {
               onChange("genres", value.filter(Boolean).join(","));
@@ -182,10 +171,10 @@ const SearchResults = () => {
                 key={genre.value}
                 size="sm"
                 className={cn(
-                  "border border-white/10 bg-white/5 text-slate-300 hover:border-cyan-400/40 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-xl transition-all text-xs",
-                  "data-[state=on]:border-cyan-400/50 data-[state=on]:bg-gradient-to-r data-[state=on]:from-cyan-500 data-[state=on]:to-blue-600 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-cyan-500/20 data-[state=on]:font-bold",
+                  "border border-slate-700 hover:border-[#e9376b] hover:text-[#e9376b] hover:bg-transparent",
+                  "data-[state=on]:border-[#e9376b] data-[state=on]:text-white data-[state=on]:bg-[#e9376b]",
                   filters.genres?.split(",").includes(genre.value)
-                    ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold"
+                    ? "bg-[#e9376b] text-white"
                     : "text-slate-300",
                 )}
               >
@@ -194,17 +183,17 @@ const SearchResults = () => {
             ))}
           </ToggleGroup>
         </div>
-        <div className="flex items-center gap-3 pt-2 border-t border-white/5">
+        <div className="flex items-center gap-2 mt-4">
           <Button
             size="sm"
-            className="px-6 h-9 rounded-xl font-bold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-md shadow-cyan-500/25 transition-all"
+            className="w-[6.25rem] hover:bg-[#e9376b] bg-[#e9376b] text-white"
             onClick={applyFilters}
           >
-            Apply Filters
+            Filter
           </Button>
           <Button
             size="sm"
-            className="px-4 h-9 text-slate-400 hover:text-white"
+            className="w-[6.25rem]"
             onClick={resetFilters}
             variant="link"
           >
@@ -212,13 +201,13 @@ const SearchResults = () => {
           </Button>
         </div>
       </div>
-      <div className="flex items-center gap-2.5 text-2xl font-bold text-white">
-        <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-cyan-400 to-blue-600 shadow-sm shadow-cyan-500/50" />
+      <div className="text-2xl font-semibold">
         {displayPhrase === "" ? (
-          "Catalog Results"
+          "Filter Results"
         ) : (
           <>
-            Results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">&quot;{displayPhrase}&quot;</span>
+            Search Results for{" "}
+            <span className="font-[800]">&quot;{params.q}&quot;</span>
           </>
         )}
       </div>
@@ -228,7 +217,7 @@ const SearchResults = () => {
             return (
               <div
                 key={idx}
-                className="rounded-2xl aspect-[3/4.2] w-full animate-pulse bg-slate-800/60 border border-white/5"
+                className="rounded-xl h-[15.625rem] min-w-[10.625rem] max-w-[12.625rem] md:h-[18.75rem] md:max-w-[12.5rem] animate-pulse bg-slate-700"
               ></div>
             );
           })}
@@ -248,19 +237,10 @@ const SearchResults = () => {
           </BlurFade>
         ))}
       </div>
-      {!isLoading && searchResults && searchResults.animes.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center gap-3 w-full">
-          <p className="text-xl font-bold text-white">No results found</p>
-          <p className="text-sm text-slate-400">
-            Try adjusting your search query or removing some filters.
-          </p>
-        </div>
-      )}
-
-      {searchResults && searchResults.totalPages > 1 && (
+      {searchResults && searchResults.totalPages && (
         <Pagination
-          totalPages={searchResults.totalPages}
-          currentPage={params.page || 1}
+          totalPages={searchResults?.totalPages}
+          currentPage={params.page}
           handleNextPage={handleNextPage}
           handlePageChange={handlePageChange}
           handlePreviousPage={handlePreviousPage}

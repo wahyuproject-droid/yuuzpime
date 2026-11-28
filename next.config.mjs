@@ -1,3 +1,16 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {reactStrictMode:true,images:{remotePatterns:[{protocol:"https",hostname:"**"}]}};
+const nextConfig = {
+  output: "standalone",
+  reactStrictMode: true,
+  serverExternalPackages: ["wreq-js"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
+  },
+};
+
 export default nextConfig;

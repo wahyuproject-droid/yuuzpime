@@ -172,7 +172,7 @@ function AnilistImport() {
                   loading={isLoading}
                   disabled={isLoading}
                   size="sm"
-                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl shadow-md shadow-cyan-500/20"
+                  className="bg-[#e9376b]  hover:bg-[#e9376b] text-white"
                   type="submit"
                   onClick={onSubmitStepOne}
                 >
@@ -208,7 +208,7 @@ function AnilistImport() {
                   loading={isLoading}
                   disabled={isLoading}
                   size="sm"
-                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl shadow-md shadow-cyan-500/20"
+                  className="bg-[#e9376b]  hover:bg-[#e9376b] text-white"
                   type="submit"
                   onClick={onSubmitStepTwo}
                 >

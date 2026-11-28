@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Play, AlertTriangle, EyeOff } from "lucide-react";
+import { MessageSquare, Play, AlertTriangle, EyeOff } from "lucide-react";
 import { useGetRecentComments } from "@/hooks/use-comments";
 import Avatar from "@/components/common/avatar";
 import { formatDistanceToNow } from "date-fns";
@@ -16,17 +16,13 @@ const RecentCommentsSection = () => {
     setRevealed((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  if (!isLoading && (!comments || comments.length === 0)) {
-    return null;
-  }
-
   return (
     <Container className="space-y-6 my-12">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-cyan-400 to-blue-600 shadow-sm shadow-cyan-500/50" />
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-[#e9376b]" />
           <h2 className="text-xl md:text-2xl font-bold text-white tracking-wide">
-            Community Activity
+            Latest Activities
           </h2>
         </div>
       </div>
@@ -39,6 +35,11 @@ const RecentCommentsSection = () => {
               className="h-40 bg-slate-800/60 animate-pulse rounded-xl border border-slate-800"
             ></div>
           ))}
+        </div>
+      ) : !comments || comments.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-8 bg-[#0f172a]/40 rounded-xl border border-slate-800 text-center">
+          <MessageSquare className="h-8 w-8 text-slate-600 mb-2" />
+          <p className="text-sm font-medium text-gray-400">No recent comments yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -53,7 +54,7 @@ const RecentCommentsSection = () => {
             return (
               <div
                 key={comment.id}
-                className="flex flex-col justify-between glass-panel p-4 rounded-2xl border border-white/10 hover:border-cyan-500/30 transition shadow-sm group"
+                className="flex flex-col justify-between bg-[#0f172a]/80 p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition shadow-sm group"
               >
                 <div className="flex flex-col gap-2.5">
                   {/* Header: User Info */}
@@ -66,7 +67,7 @@ const RecentCommentsSection = () => {
                         className="h-8 w-8 rounded-full shrink-0"
                       />
                     ) : (
-                      <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-400 font-bold shrink-0">
+                      <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-gray-400 font-bold shrink-0">
                         ?
                       </div>
                     )}
@@ -74,21 +75,21 @@ const RecentCommentsSection = () => {
                       <span className="text-xs font-bold text-white truncate">
                         {user?.username || "Anonymous"}
                       </span>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-[10px] text-gray-500">
                         {formatDistanceToNow(createdDate, { addSuffix: true })}
                       </span>
                     </div>
                   </div>
 
                   {/* Anime Title & Ep Badge */}
-                  <div className="flex items-center justify-between gap-2 bg-slate-900/60 p-2 rounded-xl border border-white/5">
+                  <div className="flex items-center justify-between gap-2 bg-slate-900/60 p-2 rounded-lg border border-slate-800/60">
                     <span
-                      className="text-xs font-semibold text-slate-300 truncate"
+                      className="text-xs font-semibold text-gray-300 truncate"
                       title={comment.animeTitle}
                     >
                       {comment.animeTitle || "Anime"}
                     </span>
-                    <span className="text-[10px] font-bold bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-2 py-0.5 rounded-md shadow-sm shrink-0">
+                    <span className="text-[10px] font-bold bg-[#e9376b] text-white px-2 py-0.5 rounded shrink-0">
                       Ep {comment.episodeNumber}
                     </span>
                   </div>
@@ -97,14 +98,14 @@ const RecentCommentsSection = () => {
                   {isSpoiler && !showSpoiler ? (
                     <button
                       onClick={() => toggleReveal(comment.id)}
-                      className="flex items-center justify-center gap-1.5 p-2 bg-yellow-950/40 border border-yellow-800/40 text-yellow-300/90 rounded-xl text-xs hover:bg-yellow-900/50 transition w-full"
+                      className="flex items-center justify-center gap-1.5 p-2 bg-yellow-950/40 border border-yellow-800/40 text-yellow-300/90 rounded-lg text-xs hover:bg-yellow-900/50 transition w-full"
                     >
                       <AlertTriangle className="h-3 w-3 text-yellow-400" />{" "}
                       Spoiler — Click to view
                     </button>
                   ) : (
                     <div className="relative">
-                      <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed break-words">
+                      <p className="text-xs text-gray-300 line-clamp-3 leading-relaxed break-words">
                         {comment.content}
                       </p>
                       {isSpoiler && showSpoiler && (
@@ -122,7 +123,7 @@ const RecentCommentsSection = () => {
                 {/* Footer Link to Episode */}
                 <Link
                   href={`/anime/watch?anime=${comment.animeId}&ep=${comment.episodeNumber}`}
-                  className="flex items-center justify-center gap-1.5 mt-3 pt-2.5 border-t border-white/10 text-xs font-bold text-slate-400 group-hover:text-cyan-400 transition"
+                  className="flex items-center justify-center gap-1.5 mt-3 pt-2.5 border-t border-slate-800/80 text-xs font-bold text-gray-400 group-hover:text-[#e9376b] transition"
                 >
                   <Play className="h-3 w-3 fill-current" /> Watch Episode{" "}
                   {comment.episodeNumber}

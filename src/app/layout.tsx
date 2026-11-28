@@ -5,9 +5,9 @@ import localFont from "next/font/local";
 import NavBar from "@/components/navbar";
 import Footer from "@/components/footer";
 import QueryProvider from "@/providers/query-provider";
-import { PublicEnvScript } from "next-runtime-env";
 
 import { ThemeProvider } from "@/components/theme-provider";
+
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = localFont({
@@ -15,23 +15,20 @@ const geistSans = localFont({
   variable: "--font-geist-sans",
   weight: "100 900",
 });
+// const geistMono = localFont({
+//   src: "./fonts/GeistMonoVF.woff",
+//   variable: "--font-geist-mono",
+//   weight: "100 900",
+// });
 
 const APP_NAME = "YuuZPime";
-const APP_DEFAULT_TITLE = "YuuZPime — Anime Discovery";
-const APP_DESCRIPTION =
-  "Discover anime with YuuZPime, without login.";
+const APP_DEFAULT_TITLE = "YuuZPime | Anime";
+const APP_DESCRIPTION = "Stream your favourite anime with ease and no ads";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
-  title: {
-    default: APP_DEFAULT_TITLE,
-    template: "%s | YuuZPime",
-  },
+  title: APP_DEFAULT_TITLE,
   description: APP_DESCRIPTION,
-  icons: {
-    icon: "/yuuz-logo.svg",
-    apple: "/yuuz-logo.svg",
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -48,7 +45,7 @@ export const metadata: Metadata = {
     description: APP_DESCRIPTION,
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: APP_DEFAULT_TITLE,
     description: APP_DESCRIPTION,
   },
@@ -59,12 +56,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        
-        <PublicEnvScript />
+        <link rel="icon" href="/yuuz-logo.svg" type="image/svg+xml" />
       </head>
       <body
         className={`${geistSans.className} antialiased max-w-[100vw] overflow-x-hidden`}
@@ -72,7 +67,7 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem
+          enableSystem={false}
           disableTransitionOnChange
         >
           <QueryProvider>

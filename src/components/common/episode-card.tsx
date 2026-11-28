@@ -38,6 +38,7 @@ const EpisodeCard = ({
     props.animeId,
     props.episode.episodeId,
     props.watchedEpisodes!,
+    props.episode.number,
   );
 
   const isSelected =
@@ -68,9 +69,9 @@ const EpisodeCard = ({
       >
         <div
           className={cn([
-            "h-[5.25rem] rounded-xl cursor-pointer w-full flex items-center justify-center bg-slate-900/60 border border-white/5 md:text-base text-xs font-semibold transition-all hover:border-cyan-500/30",
-            isSelected && "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-md shadow-cyan-500/25 border-cyan-400/50",
-            !isSelected && hasWatchedEpisode && "bg-slate-950/80 text-gray-500 border-white/5",
+            "h-[5.25rem] rounded-lg cursor-pointer w-full flex items-center justify-center bg-secondary md:text-base text-xs font-semibold transition-all",
+            isSelected && "bg-[#e9376b] text-white shadow-md font-bold",
+            !isSelected && hasWatchedEpisode && "bg-slate-900 text-gray-400",
           ])}
         >
           {`Episode ${props.episode.number}`}
@@ -84,12 +85,12 @@ const EpisodeCard = ({
       >
         <div
           className={cn([
-            "flex gap-3 items-center justify-between w-full h-fit rounded-xl p-3 transition-all cursor-pointer text-xs md:text-sm font-medium border border-transparent",
+            "flex gap-3 items-center justify-between w-full h-fit rounded-lg p-2.5 transition-all cursor-pointer text-xs md:text-sm font-medium",
             isSelected
-              ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-md shadow-cyan-500/25 border-cyan-400/40"
+              ? "bg-[#e9376b] text-white font-bold shadow-md ring-1 ring-[#e9376b]/50"
               : hasWatchedEpisode
-                ? "bg-slate-950/60 text-gray-400 hover:bg-slate-900 border-white/5"
-                : "bg-slate-900/50 text-gray-300 hover:bg-slate-800/80 hover:text-white border-white/5 hover:border-cyan-500/20",
+                ? "bg-slate-900/80 text-gray-400 hover:bg-slate-800"
+                : "bg-secondary/40 text-gray-300 hover:bg-secondary/70 hover:text-white",
           ])}
         >
           <div className="flex items-center gap-2 min-w-0">
