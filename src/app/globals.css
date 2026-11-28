@@ -165,3 +165,49 @@ body{font-family:var(--font-geist-sans),Arial,Helvetica,sans-serif}
 @media(max-width:640px){.yuuz-top-inner{gap:6px;padding:9px 10px}.yuuz-icon-button{width:34px}.yuuz-brand img{width:30px;height:30px}.yuuz-glass{box-shadow:inset 0 1px 0 #ffffff10}.yuuz-footer{padding:22px 16px}.yuuz-menu{max-height:calc(100dvh - 160px);overflow:auto}}
 @media(min-width:480px) and (max-width:640px){.yuuz-brand span{display:block;font-size:15px}}
 @media(prefers-reduced-motion:reduce){.yuuz-dock-link{transition:none}}
+
+/* Spotlight motion: composited transforms only; original catalogue untouched. */
+.yuuz-hero{position:relative;isolation:isolate;width:100%;height:clamp(440px,72svh,760px);overflow:hidden;background:#121212}
+.yuuz-hero-slide{height:clamp(440px,72svh,760px);position:relative;overflow:hidden;isolation:isolate}
+.yuuz-hero-image{position:absolute;inset:0;background-size:cover;background-position:center;transform:scale(1.015)}
+.yuuz-hero-shade,.yuuz-hero-vignette{position:absolute;inset:0;z-index:1;pointer-events:none}
+.yuuz-hero-shade{background:linear-gradient(90deg,#101010f5 0%,#101010a0 34%,transparent 85%)}
+.yuuz-hero-vignette{background:linear-gradient(0deg,#121212 0%,#101010a0 20%,transparent 60%,#10101088 100%)}
+.yuuz-hero-body{position:relative;z-index:2;height:100%;padding:76px 0 82px}
+.yuuz-hero-copy{max-width:700px}
+.yuuz-hero-title{font-size:clamp(30px,4vw,58px);line-height:1.1;letter-spacing:-.04em;text-wrap:balance}
+.yuuz-hero-kicker{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;letter-spacing:.23em;color:#ddd}
+.yuuz-hero-kicker span{height:6px;width:6px;border-radius:50%;background:#eee}
+.yuuz-hero-controls{position:absolute;z-index:5;left:0;right:0;bottom:20px;max-width:1320px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 24px}
+.yuuz-hero-dots{display:flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:60%}
+.yuuz-hero-dot{height:6px;width:7px;border-radius:999px;background:#ffffff45;overflow:hidden;position:relative;transition:width .25s ease;cursor:pointer}
+.yuuz-hero-dot.selected{width:32px;background:#ffffff35}
+.yuuz-hero-dot .fill{display:block;position:absolute;inset:0;background:#f4f4f4;border-radius:inherit}
+.yuuz-hero-dot .fill.running{transform-origin:left;animation:yuuz-progress 6.5s linear both}
+.yuuz-hero-arrows{display:flex;align-items:center;gap:7px}
+.yuuz-hero-counter{font-size:11px;letter-spacing:.06em;color:#ddd;font-variant-numeric:tabular-nums;margin-right:5px}
+.yuuz-hero-control{display:grid;place-items:center;width:36px;height:36px;border:1px solid #ffffff26;border-radius:50%;background:#151515c9;color:#fff;transition:transform .18s,background .18s}
+.yuuz-hero-control:hover{background:#ffffff24}.yuuz-hero-control:active{transform:scale(.93)}.yuuz-hero-control:disabled{opacity:.4}
+.yuuz-hero-control:focus-visible,.yuuz-hero-dot:focus-visible{outline:2px solid white;outline-offset:4px}
+.yuuz-hero-slide.is-active.has-motion .yuuz-hero-image{animation:yuuz-banner-pan 7s ease-out both}
+.yuuz-hero-slide.is-active.has-motion .yuuz-hero-copy>*{animation:yuuz-hero-enter .65s cubic-bezier(.22,1,.36,1) both}
+.yuuz-hero-slide.is-active.has-motion .yuuz-hero-copy>*:nth-child(2){animation-delay:.08s}
+.yuuz-hero-slide.is-active.has-motion .yuuz-hero-copy>*:nth-child(3){animation-delay:.16s}
+.yuuz-hero-slide.is-active.has-motion .yuuz-hero-copy>*:nth-child(4){animation-delay:.24s}
+@keyframes yuuz-banner-pan{from{transform:scale(1.035)}to{transform:scale(1.09)}}
+@keyframes yuuz-hero-enter{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+@keyframes yuuz-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(max-width:640px){
+ .yuuz-hero,.yuuz-hero-slide{height:clamp(400px,68svh,580px)}
+ .yuuz-hero-image{background-position:center 25%}
+ .yuuz-hero-shade{background:linear-gradient(90deg,#10101066,transparent)}
+ .yuuz-hero-vignette{background:linear-gradient(0deg,#121212 0%,#101010de 20%,#10101055 50%,transparent 75%,#101010aa 100%)}
+ .yuuz-hero-body{padding:76px 0 66px}
+ .yuuz-hero-copy{max-width:100%}
+ .yuuz-hero-title{font-size:clamp(26px,7vw,38px)}
+ .yuuz-hero-controls{bottom:14px;padding:0 16px;gap:8px}
+ .yuuz-hero-arrows{gap:5px}.yuuz-hero-counter{display:none}.yuuz-hero-control{width:34px;height:34px}
+ .yuuz-hero-slide.is-active.has-motion .yuuz-hero-image{animation-name:yuuz-banner-mobile}
+ @keyframes yuuz-banner-mobile{from{transform:scale(1.01)}to{transform:scale(1.045)}}
+}
+@media(prefers-reduced-motion:reduce){.yuuz-hero-image,.yuuz-hero-copy>*,.yuuz-hero-dot .fill{animation:none!important;transform:none!important}.yuuz-hero-dot,.yuuz-hero-control{transition:none}}
