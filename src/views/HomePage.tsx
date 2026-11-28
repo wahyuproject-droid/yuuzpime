@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppNavigate } from '@/lib/useNavigate';
 import { Anime } from '../types';
 import { getUnifiedSeasonNow, getUnifiedTopAnime } from '../lib/animeApi';
+import { getMiruHome } from '@/lib/miru/home';
 import { FALLBACK_ANIME_LIST, getFallbackTopAnime } from '../lib/fallbackData';
 import { NativeBanner } from '../components/ads/NativeBanner';
 import { SwiperHeroCarousel } from '../components/anime/SwiperHeroCarousel';
@@ -34,47 +35,70 @@ export const HomePage: React.FC = () => {
     setLoadingHero(true);
     setLoadingSections(true);
 
-    // Fetch Featured Hero (Season Now) with active DataSource
-    // Only include anime that are currently airing (exclude not-yet-aired and finished)
-    getUnifiedSeasonNow({ source: dataSource, limit: 30 })
-      .then((res) => {
-        if (isMounted) {
-          const all = res.data && res.data.length > 0 ? res.data : FALLBACK_ANIME_LIST.slice(0, 20);
-          const airing = all.filter((a) => a.airing === true || a.status === 'Currently Airing');
-          setFeaturedAnime(airing.length > 0 ? airing.slice(0, 8) : FALLBACK_ANIME_LIST.slice(0, 8));
-          setLoadingHero(false);
+    // Prefer the combined Miru AniList catalog in automatic/AniList mode.
+    // Explicit Jikan selection retains the existing provider workflow.
+    const loadOriginal = () => {
+      if (!isMounted) return;
+      // Fetch Featured Hero (Season Now) with active DataSource
+      // Only include anime that are currently airing (exclude not-yet-aired and finished)
+      getUnifiedSeasonNow({ source: dataSource, limit: 30 })
+        .then((res) => {
+          if (isMounted) {
+            const all = res.data && res.data.length > 0 ? res.data : FALLBACK_ANIME_LIST.slice(0, 20);
+            const airing = all.filter((a) => a.airing === true || a.status === 'Currently Airing');
+            setFeaturedAnime(airing.length > 0 ? airing.slice(0, 8) : FALLBACK_ANIME_LIST.slice(0, 8));
+            setLoadingHero(false);
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            const fallback = FALLBACK_ANIME_LIST.filter((a) => a.airing === true || a.status === 'Currently Airing');
+            setFeaturedAnime(fallback.length > 0 ? fallback.slice(0, 8) : FALLBACK_ANIME_LIST.slice(0, 8));
+            setLoadingHero(false);
+          }
+        });
+  
+      // Fetch Section content in parallel
+      Promise.all([
+        getUnifiedTopAnime({ source: dataSource, filter: 'bypopularity', limit: 12 }),
+        getUnifiedTopAnime({ source: dataSource, filter: 'airing', limit: 12 }),
+        getUnifiedTopAnime({ source: dataSource, filter: 'upcoming', limit: 12 }),
+      ])
+        .then(([popRes, airRes, upRes]) => {
+          if (isMounted) {
+            setPopularAnime(popRes.data && popRes.data.length > 0 ? popRes.data : getFallbackTopAnime('bypopularity', 12));
+            setAiringAnime(airRes.data && airRes.data.length > 0 ? airRes.data : getFallbackTopAnime('airing', 12));
+            setUpcomingAnime(upRes.data && upRes.data.length > 0 ? upRes.data : getFallbackTopAnime('upcoming', 12));
+            setLoadingSections(false);
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            setPopularAnime(getFallbackTopAnime('bypopularity', 12));
+            setAiringAnime(getFallbackTopAnime('airing', 12));
+            setUpcomingAnime(getFallbackTopAnime('upcoming', 12));
+            setLoadingSections(false);
+          }
+        });
+  
+    };
+    if (String(dataSource).toLowerCase() === 'jikan') {
+      loadOriginal();
+    } else {
+      getMiruHome().then(result => {
+        if (!isMounted) return;
+        if (!result.featured.length && !result.popular.length && !result.airing.length && !result.upcoming.length) {
+          loadOriginal();
+          return;
         }
-      })
-      .catch(() => {
-        if (isMounted) {
-          const fallback = FALLBACK_ANIME_LIST.filter((a) => a.airing === true || a.status === 'Currently Airing');
-          setFeaturedAnime(fallback.length > 0 ? fallback.slice(0, 8) : FALLBACK_ANIME_LIST.slice(0, 8));
-          setLoadingHero(false);
-        }
-      });
-
-    // Fetch Section content in parallel
-    Promise.all([
-      getUnifiedTopAnime({ source: dataSource, filter: 'bypopularity', limit: 12 }),
-      getUnifiedTopAnime({ source: dataSource, filter: 'airing', limit: 12 }),
-      getUnifiedTopAnime({ source: dataSource, filter: 'upcoming', limit: 12 }),
-    ])
-      .then(([popRes, airRes, upRes]) => {
-        if (isMounted) {
-          setPopularAnime(popRes.data && popRes.data.length > 0 ? popRes.data : getFallbackTopAnime('bypopularity', 12));
-          setAiringAnime(airRes.data && airRes.data.length > 0 ? airRes.data : getFallbackTopAnime('airing', 12));
-          setUpcomingAnime(upRes.data && upRes.data.length > 0 ? upRes.data : getFallbackTopAnime('upcoming', 12));
-          setLoadingSections(false);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setPopularAnime(getFallbackTopAnime('bypopularity', 12));
-          setAiringAnime(getFallbackTopAnime('airing', 12));
-          setUpcomingAnime(getFallbackTopAnime('upcoming', 12));
-          setLoadingSections(false);
-        }
-      });
+        setFeaturedAnime(result.featured.length ? result.featured : result.airing.length ? result.airing.slice(0,8) : FALLBACK_ANIME_LIST.slice(0,8));
+        setPopularAnime(result.popular.length ? result.popular : getFallbackTopAnime('bypopularity',12));
+        setAiringAnime(result.airing.length ? result.airing : getFallbackTopAnime('airing',12));
+        setUpcomingAnime(result.upcoming.length ? result.upcoming : getFallbackTopAnime('upcoming',12));
+        setLoadingHero(false);
+        setLoadingSections(false);
+      }).catch(loadOriginal);
+    }
 
     return () => {
       isMounted = false;

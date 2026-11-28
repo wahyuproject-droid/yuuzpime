@@ -882,3 +882,7 @@ EliasDex 2 is built around these core principles:
 ```
 
 Built with Next.js 14+, TypeScript strict mode, MongoDB, and a carefully curated set of external APIs.
+
+
+### Miru Web integration
+Home catalog query adapted from Miru Web revision 15dd1b636d15f7bf740a4f768463a09c10411dda (MIT, Dovakiin0). UI, MAL IDs, guest mode, existing player, and Manga Hub retained. No Miru video proxy, external streaming providers, or PocketBase login imported. See licenses/MIRU.txt.
