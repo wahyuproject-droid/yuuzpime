@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   BookOpen,
   Search,
@@ -163,6 +164,8 @@ export const MangaPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      <Link href="/manga/local" className="flex items-center justify-between gap-3 rounded-2xl border border-ink-700 bg-surface-canvas p-4 text-surface-primary"><span className="flex items-center gap-3"><BookOpen className="w-5 h-5"/><span><span className="block font-semibold">Baca Manga Lokal</span><span className="block text-xs text-ink-500">Reader Yomikiru · Koleksi gambar pribadi · Tanpa login</span></span></span><ChevronRight className="w-5 h-5"/></Link>
 
       {/* 2. Main Content */}
       {debouncedQuery ? (
