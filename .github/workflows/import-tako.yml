@@ -2,7 +2,7 @@ name: Build YuuZPime APK
 on:
   push:
     branches: [main]
-    paths: ['lib/**', 'android/**', 'pubspec.yaml', 'pubspec.lock', '.github/workflows/import-tako.yml']
+    paths: ['lib/**', 'android/**', 'test/yuuz_update_test.dart', 'pubspec.yaml', 'pubspec.lock', '.github/workflows/import-tako.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -34,19 +34,38 @@ jobs:
           fi
           chmod +x android/gradlew
       - run: flutter pub get
-      - name: Build test APK
+      - name: Test version-aware update checker
+        run: flutter test test/yuuz_update_test.dart
+      - name: Build APK
+        env:
+          KEYSTORE_B64: ${{ secrets.YUUZ_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.YUUZ_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.YUUZ_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.YUUZ_KEY_PASSWORD }}
         run: |
-          flutter build apk --debug
-          cp build/app/outputs/flutter-apk/app-debug.apk YuuZPime-debug.apk
-          sha256sum YuuZPime-debug.apk > YuuZPime-debug.apk.sha256
+          set -euo pipefail
+          if [ -n "$KEYSTORE_B64" ]; then
+            test -n "$STORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD"
+            umask 077
+            trap 'rm -f android/key.properties "$RUNNER_TEMP/yuuz-release.jks"' EXIT
+            printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/yuuz-release.jks"
+            printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$RUNNER_TEMP/yuuz-release.jks" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/key.properties
+            flutter build apk --release
+            cp build/app/outputs/flutter-apk/app-release.apk YuuZPime.apk
+            sha256sum YuuZPime.apk > YuuZPime.apk.sha256
+          else
+            flutter build apk --debug
+            cp build/app/outputs/flutter-apk/app-debug.apk YuuZPime-debug.apk
+            sha256sum YuuZPime-debug.apk > YuuZPime-debug.apk.sha256
+          fi
           sed -n 's/^version: \([0-9.]*\)+.*$/yuuzpime-tako-v\1/p' pubspec.yaml > release-tag.txt
           test -s release-tag.txt
       - uses: actions/upload-artifact@v4
         with:
           name: YuuZPime-APK
           path: |
-            YuuZPime-debug.apk
-            YuuZPime-debug.apk.sha256
+            YuuZPime*.apk
+            YuuZPime*.apk.sha256
             release-tag.txt
           if-no-files-found: error
   publish:
@@ -67,6 +86,8 @@ jobs:
           TAG=$(cat release-tag.txt)
           if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
             echo "Version already published. Increment pubspec version and Dart version for another update."
+          elif [ -f YuuZPime.apk ]; then
+            gh release create "$TAG" YuuZPime.apk YuuZPime.apk.sha256 --repo "$REPO" --target "$REV" --title "YuuZPime ${TAG#yuuzpime-tako-}" --notes "Noncommercial signed release. Original TakoPlay attribution and license retained."
           else
             gh release create "$TAG" YuuZPime-debug.apk YuuZPime-debug.apk.sha256 --repo "$REPO" --target "$REV" --title "YuuZPime ${TAG#yuuzpime-tako-}" --notes "Noncommercial debug APK; test build only. Original TakoPlay attribution and license retained. Debug signatures may differ between builds; in-place upgrade requires a persistent signing key." --prerelease
           fi

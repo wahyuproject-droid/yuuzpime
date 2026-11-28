@@ -1,5 +1,3 @@
-# YuuZPime updates
+YuuZPime builds from main without upstream re-import. Increment version in pubspec.yaml and lib/utils/constants.dart together. Updates are checked against official GitHub release tags and exact APK asset URLs; Android requires user installation approval.
 
-Build on changes to main; publish only a new version. Increment pubspec.yaml version/build code and the version tag in lib/utils/constants.dart together. The Android app checks the official repository release list and accepts only higher YuuZPime version tags and exact project APK URLs. The user approves installation.
-
-Current artifacts are debug test builds. To support reliable in-place upgrades, set up a persistent Android release keystore owned by the app owner. Never commit private keys. Existing debug builds may require a one-time reinstall, so back up local data first. Production signing is not yet configured.
+For stable signing configure repository Actions secrets YUUZ_KEYSTORE_B64 (base64 of the owner's persistent release keystore), YUUZ_STORE_PASSWORD, YUUZ_KEY_ALIAS and YUUZ_KEY_PASSWORD. Keep credentials private; never commit them. Without those secrets the workflow publishes only debug test APKs, whose signing keys can differ. A one-time migration from the earlier debug build may require reinstalling after backing up app data. The current version must be installed manually because the earlier updater checks a fixed tag.
