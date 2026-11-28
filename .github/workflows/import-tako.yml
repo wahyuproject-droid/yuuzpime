@@ -40,6 +40,8 @@ jobs:
               p=Path(name)
               s=p.read_text().replace("TakoPlay","YuuZPime").replace("TAKOPLAY","YUUZPIME").replace("Tako Play","YuuZPime")
               p.write_text(s)
+          p=Path("android/settings.gradle.kts")
+          p.write_text(p.read_text().replace('version "9.1.0"', 'version "9.1.1"'))
           p=Path("android/app/build.gradle.kts")
           p.write_text(p.read_text().replace('applicationId = "com.kaungsatthein.takoplay"','applicationId = "com.yuuzstudio.yuuzpime"'))
           p=Path("lib/utils/constants.dart")
