@@ -1,0 +1,119 @@
+name: Import TakoPlay and build YuuZPime
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/import-tako.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: yuuzpime-tako-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      revision: ${{ steps.publish.outputs.revision }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Import pinned upstream source without executing it
+        run: |
+          set -euo pipefail
+          git init "$RUNNER_TEMP/tako"
+          git -C "$RUNNER_TEMP/tako" remote add origin https://github.com/kaungsatthe1n/Tako-Play.git
+          git -C "$RUNNER_TEMP/tako" fetch --depth=1 origin 2e8035c3124948d6b903259eca388fb2a40e2fdd
+          git -C "$RUNNER_TEMP/tako" archive FETCH_HEAD | tar -x -C "$RUNNER_TEMP/tako"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, shutil
+          src=Path(os.environ["RUNNER_TEMP"])/"tako"
+          for item in src.iterdir():
+              if item.name in {".git",".github",".vscode"}: continue
+              dest=Path(item.name)
+              if item.is_dir():
+                  shutil.copytree(item,dest,dirs_exist_ok=True,ignore=shutil.ignore_patterns("build",".dart_tool",".gradle","Pods","DerivedData"))
+              else:
+                  shutil.copy2(item,dest)
+          for name in ["lib/main.dart","lib/widgets/anime_drawer.dart","android/app/src/main/AndroidManifest.xml","ios/Runner/Info.plist"]:
+              p=Path(name)
+              s=p.read_text().replace("TakoPlay","YuuZPime").replace("TAKOPLAY","YUUZPIME").replace("Tako Play","YuuZPime")
+              p.write_text(s)
+          p=Path("android/app/build.gradle.kts")
+          p.write_text(p.read_text().replace('applicationId = "com.kaungsatthein.takoplay"','applicationId = "com.yuuzstudio.yuuzpime"'))
+          p=Path("lib/utils/constants.dart")
+          s=p.read_text().replace("https://api.github.com/repos/kaungsatthe1n/Tako-Play/releases/latest","https://api.github.com/repos/wahyuproject-droid/yuuzpime/releases/tags/yuuzpime-tako-v1.9.1").replace("const String version = 'v1.9.1';","const String version = 'yuuzpime-tako-v1.9.1';")
+          p.write_text(s)
+          p=Path("lib/screens/about_app_screen.dart")
+          s=p.read_text().replace("title: Text('Creator'),","title: Text('Original creator'),").replace("          const ListTile(\n            title: Text('Contributors'),","          const ListTile(title: Text('Modified by'), subtitle: Text('YuuZ')),\n          const ListTile(\n            title: Text('Contributors'),")
+          p.write_text(s)
+          shutil.copy2("LICENSE","assets/images/LICENSE-TakoPlay.txt")
+          p=Path("README.md")
+          p.write_text("# YuuZPime\n\nNoncommercial Flutter adaptation of TakoPlay. Original copyright and license retained.\n\nUpstream: https://github.com/kaungsatthe1n/Tako-Play/tree/2e8035c3124948d6b903259eca388fb2a40e2fdd\n\nAndroid build: see Actions. Vercel hosts a download page, not a web streaming client. The original README follows.\n\n"+p.read_text())
+          PY
+      - name: Commit imported source
+        id: publish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Import TakoPlay source and apply YuuZPime branding"
+            git push origin HEAD:main
+          fi
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  apk:
+    needs: import
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.import.outputs.revision }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Prepare Gradle wrapper if missing
+        run: |
+          if [ ! -f android/gradlew ] || [ ! -f android/gradle/wrapper/gradle-wrapper.jar ]; then
+            flutter create --platforms=android --project-name wrapper_template "$RUNNER_TEMP/wrapper_template"
+            cp "$RUNNER_TEMP/wrapper_template/android/gradlew" android/gradlew
+            cp "$RUNNER_TEMP/wrapper_template/android/gradlew.bat" android/gradlew.bat
+            cp "$RUNNER_TEMP/wrapper_template/android/gradle/wrapper/gradle-wrapper.jar" android/gradle/wrapper/
+          fi
+          chmod +x android/gradlew
+      - run: flutter pub get
+      - run: flutter build apk --debug
+      - run: cp build/app/outputs/flutter-apk/app-debug.apk YuuZPime-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YuuZPime-APK
+          path: YuuZPime-debug.apk
+          if-no-files-found: error
+  publish:
+    needs: apk
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: YuuZPime-APK
+      - name: Publish noncommercial test APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          TAG=yuuzpime-tako-v1.9.1
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            gh release upload "$TAG" YuuZPime-debug.apk --repo "$REPO" --clobber
+          else
+            gh release create "$TAG" YuuZPime-debug.apk --repo "$REPO" --title "YuuZPime (TakoPlay adaptation)" --notes "Noncommercial debug APK. Original TakoPlay copyright and PolyForm Noncommercial License retained. Playback availability not guaranteed." --prerelease
+          fi

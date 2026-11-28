@@ -1,0 +1,6 @@
+{
+  "framework": null,
+  "buildCommand": "echo Static download portal",
+  "installCommand": "echo No web dependencies",
+  "outputDirectory": "web"
+}
