@@ -1,48 +1,87 @@
-import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Outfit } from 'next/font/google';
-import { AppProviders } from '@/components/providers/AppProviders';
-import { AppShell } from '@/components/layout/AppShell';
-import { constructMetadata } from '@/lib/metadata';
-import { DbStatusBanner } from '@/components/DbStatusBanner';
-import { AnnouncementBanner } from '@/components/announcement/AnnouncementBanner';
-import './globals.css';
+import "./globals.css";
+import type { Metadata } from "next";
+import localFont from "next/font/local";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  weight: ['400', '500', '600', '700', '800'],
+import NavBar from "@/components/navbar";
+import Footer from "@/components/footer";
+import QueryProvider from "@/providers/query-provider";
+import { PublicEnvScript } from "next-runtime-env";
+
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
 });
 
-const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-heading',
-  weight: ['600', '700', '800'],
-});
+const APP_NAME = "YuuZPime";
+const APP_DEFAULT_TITLE = "YuuZPime — Anime Discovery";
+const APP_DESCRIPTION =
+  "Discover anime with YuuZPime, without login.";
 
-export const metadata: Metadata = constructMetadata();
+export const metadata: Metadata = {
+  applicationName: APP_NAME,
+  title: {
+    default: APP_DEFAULT_TITLE,
+    template: "%s | YuuZPime",
+  },
+  description: APP_DESCRIPTION,
+  icons: {
+    icon: "/yuuz-logo.svg",
+    apple: "/yuuz-logo.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: APP_DEFAULT_TITLE,
+  },
+  manifest: "/manifest.json",
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    title: APP_DEFAULT_TITLE,
+    description: APP_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: APP_DEFAULT_TITLE,
+    description: APP_DESCRIPTION,
+  },
+};
 
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${plusJakartaSans.variable} ${outfit.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="darkreader-lock" />
+        
+        <PublicEnvScript />
       </head>
       <body
-        lang="en"
-        className={`${plusJakartaSans.variable} ${outfit.variable}`}
-        suppressHydrationWarning
+        className={`${geistSans.className} antialiased max-w-[100vw] overflow-x-hidden`}
       >
-        <div className="tech-grid-background" aria-hidden="true" />
-        <AppProviders>
-          <AppShell>{children}</AppShell>
-          <AnnouncementBanner />
-        </AppProviders>
-        <DbStatusBanner />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <QueryProvider>
+            <NavBar />
+            {children}
+            <Footer />
+          </QueryProvider>
+        </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   );
