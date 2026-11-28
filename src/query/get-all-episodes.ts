@@ -46,6 +46,7 @@ const fetchAniListEpisodesFallback = async (
     `;
     const res = await fetch("https://graphql.anilist.co", {
       method: "POST",
+      signal: AbortSignal.timeout(8000),
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         query,
@@ -91,12 +92,16 @@ const fetchAniListEpisodesFallback = async (
   }
 };
 
-const getAllEpisodes = async (animeId: string): Promise<IEpisodesData> => {
+const getAllEpisodes = async (animeId: string, signal: AbortSignal): Promise<IEpisodesData> => {
   try {
     const endpointUrl = await resolveApiEndpoint(`/episodes/${animeId}`);
+    const deadline = AbortSignal.any([signal, AbortSignal.timeout(25000)]);
     const res = endpointUrl.startsWith("http")
-      ? await fetch(endpointUrl).then(async (r) => ({ data: await r.json() }))
-      : await api.get<EpisodeResponse>(`/episodes/${animeId}`);
+      ? await fetch(endpointUrl, { signal: deadline }).then(async (r) => {
+          if (!r.ok) throw new Error(`Episodes HTTP ${r.status}`);
+          return { data: await r.json() };
+        })
+      : await api.get<EpisodeResponse>(`/episodes/${animeId}`, { signal: deadline, timeout: 25000 });
     const data: any = res.data;
 
     const providersMap: Record<string, any> = { ...(data.providers || {}) };
@@ -185,17 +190,16 @@ const getAllEpisodes = async (animeId: string): Promise<IEpisodesData> => {
       nextAiringEpisode: data.mappings?.nextAiringEpisode || null,
     };
   } catch (err) {
-    console.warn(
-      `Upstream /episodes API failed for animeId ${animeId}. Using AniList fallback:`,
-      err,
-    );
-    return await fetchAniListEpisodesFallback(animeId);
+    // Preserve network failures as errors instead of implying playable episodes exist.
+    throw err;
   }
 };
 
 export const useGetAllEpisodes = (animeId: string) => {
   return useQuery({
-    queryFn: () => getAllEpisodes(animeId),
+    queryFn: ({ signal }) => getAllEpisodes(animeId, signal),
+    retry: false,
+    refetchOnWindowFocus: false,
     queryKey: [GET_ALL_EPISODES, animeId],
     enabled: !!animeId,
   });

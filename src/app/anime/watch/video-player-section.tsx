@@ -39,7 +39,7 @@ const VideoPlayerSection = () => {
   const { selectedEpisode, setSelectedEpisode, anime } = useAnimeStore();
 
   const { data: isSourceAvailable } = useGetSourceAvailable();
-  const { data: allEpisodesData, isLoading: isLoadingEpisodes } =
+  const { data: allEpisodesData, isLoading: isLoadingEpisodes, isError: episodeListError, refetch: retryEpisodes } =
     useGetAllEpisodes(animeIdParam);
 
   const [localProxyActive, setLocalProxyActive] = useState<boolean>(false);
@@ -90,7 +90,7 @@ const VideoPlayerSection = () => {
   const [useFallback, setUseFallback] = useState<boolean>(false);
   const [failedEpisodeIds, setFailedEpisodeIds] = useState<Set<string>>(new Set());
 
-  const { data: episodeData, isLoading: isLoadingData } = useGetEpisodeData(
+  const { data: episodeData, isLoading: isLoadingData, isError: streamError, refetch: retryStream } = useGetEpisodeData(
     activeEpisodeId,
     !useFallback && activeEpisodeId.includes("watch/"),
   );
@@ -341,12 +341,15 @@ const VideoPlayerSection = () => {
     }
   };
 
+  if (episodeListError || (streamError && !useFallback)) {
+    return <div className="yuuz-screen aspect-video grid place-items-center text-center p-5"><div className="space-y-3"><AlertCircle className="mx-auto text-neutral-400"/><p className="font-medium">Koneksi provider gagal</p><p className="text-sm text-neutral-400">Permintaan ditolak atau melebihi batas 25 detik.</p><Button variant="outline" onClick={()=>void (episodeListError ? retryEpisodes() : retryStream())}>Coba lagi</Button></div></div>;
+  }
   if (!isLoadingEpisodes && !allEpisodesData?.episodes?.length) {
     return <div className="yuuz-screen aspect-video grid place-items-center text-center p-5"><div className="space-y-2"><AlertCircle className="mx-auto text-neutral-400"/><p className="font-medium">Episode belum tersedia</p><p className="text-sm text-neutral-400">Provider belum mengembalikan daftar episode.</p></div></div>;
   }
   if (!activeEpisodeId || isLoadingEpisodes || (isLoadingData && !useFallback)) {
     return (
-      <div className="h-auto aspect-video lg:max-h-[calc(100vh-150px)] min-h-[20vh] sm:min-h-[30vh] md:min-h-[40vh] lg:min-h-[60vh] w-full animate-pulse bg-neutral-800 rounded-xl"></div>
+      <div className="yuuz-screen aspect-video grid place-items-center text-center p-5"><div className="space-y-3"><div className="mx-auto h-7 w-7 rounded-full border-2 border-neutral-600 border-t-white animate-spin"/><p className="font-medium">{isLoadingEpisodes ? "Memuat daftar episode..." : "Memuat sumber video..."}</p><p className="text-xs text-neutral-400">Menunggu respons provider.</p></div></div>
     );
   }
 

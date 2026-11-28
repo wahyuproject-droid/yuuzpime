@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 
 const getEpisodeData = async (
   episodeId: string,
+  signal: AbortSignal,
 ): Promise<IEpisodeSource> => {
   const cleanId = episodeId.startsWith("/") ? episodeId : `/${episodeId}`;
   // Only query /watch/... endpoints; plain numeric fallback IDs have no provider stream
@@ -23,9 +24,13 @@ const getEpisodeData = async (
   }
 
   const endpointUrl = await resolveApiEndpoint(cleanId);
+  const deadline = AbortSignal.any([signal, AbortSignal.timeout(25000)]);
   const res = endpointUrl.startsWith("http")
-    ? await fetch(endpointUrl).then(async (r) => ({ data: (await r.json()) as WatchSourcesResponse }))
-    : await api.get<WatchSourcesResponse>(cleanId);
+    ? await fetch(endpointUrl, { signal: deadline }).then(async (r) => {
+        if (!r.ok) throw new Error(`Watch HTTP ${r.status}`);
+        return { data: (await r.json()) as WatchSourcesResponse };
+      })
+    : await api.get<WatchSourcesResponse>(cleanId, { signal: deadline, timeout: 25000 });
   const data = res.data;
 
   const parts = cleanId.split("/");
@@ -151,7 +156,7 @@ function resolveSubLabel(sub: any, fileUrl: string): string {
 
 export const useGetEpisodeData = (episodeId: string, enabled: boolean = true) => {
   return useQuery({
-    queryFn: () => getEpisodeData(episodeId),
+    queryFn: ({ signal }) => getEpisodeData(episodeId, signal),
     queryKey: [GET_EPISODE_DATA, episodeId],
     refetchOnWindowFocus: false,
     retry: false,
