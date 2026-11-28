@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, ExternalLink, ShieldCheck } from 'lucide-react';
+import { ExternalLink, ShieldCheck } from 'lucide-react';
 
 export const Footer: React.FC = () => {
  return (
@@ -8,9 +8,7 @@ export const Footer: React.FC = () => {
     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
      <div className="md:col-span-2 space-y-3">
       <div className="flex items-center gap-2">
-       <div className="w-7 h-7 rounded-lg bg-orange-600 flex items-center justify-center shadow-md ">
-        <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
-       </div>
+       <img src="/icon.svg" alt="YuuZPime" className="w-7 h-7 rounded-lg object-contain" />
        <span className="font-heading font-bold text-lg text-surface-primary">
          YuuZ<span className="text-orange-400">Pime</span>
        </span>
@@ -79,7 +77,7 @@ export const Footer: React.FC = () => {
     <div className="pt-8 border-t border-ink-700 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-500">
      <p>© {new Date().getFullYear()} YuuZPime. All anime metadata belongs to MyAnimeList.</p>
      <span className="flex items-center gap-1">
-      <span>Modifikasi: YuuZGilakPrompt · <a href="https://sociabuzz.com/yuuzdisini" target="_blank" rel="noopener noreferrer" className="underline">SociaBuzz</a> · MIT · Original: Irvan Farael Hanafi</span>
+      <span>Modifikasi: YuuZ · <a href="https://sociabuzz.com/yuuzdisini" target="_blank" rel="noopener noreferrer" className="underline">SociaBuzz</a> · <a className="underline" href="https://github.com/wahyuproject-droid/yuuzpime/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></span>
      </span>
     </div>
    </div>

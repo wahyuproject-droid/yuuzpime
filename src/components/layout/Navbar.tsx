@@ -137,9 +137,9 @@ export const Navbar: React.FC = () => {
 <img
    src="/icon.svg"
    alt="YuuZPime"
-   className="w-9 h-9 rounded-xl object-contain mr-2"
+   className="w-9 h-9 rounded-xl object-contain"
  />
-<span className="hidden lg:block font-heading font-extrabold text-lg tracking-tight text-surface-primary">
+<span className="hidden sm:block font-heading font-extrabold text-lg tracking-tight text-surface-primary">
   YuuZPime
 </span>
 </button>
