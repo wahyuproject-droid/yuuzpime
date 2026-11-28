@@ -1,3 +1,3 @@
-# YuuZPime Android
+# YuuZPime Kitsune Edition
 
-Native Android WebView client for the YuuZPime site. Requires internet. No account is implemented by the wrapper; it follows the website's guest mode. No native video provider or offline catalogue. This branch is isolated from the web deployment. The Actions build signs a test release and publishes the APK and checksum. New builds use temporary signing keys, so an uninstall may be required for updates.
+Kitsune original archive revision c7fa855304c3c198f9b9a366e5006989d0535fad, 214 verified files, MIT Dovakiin0. Bundled Android UI using original catalog components, guest mode, no Vercel. Source release includes original archive and adapters. Unverified video sources and desktop Companion are not enabled.

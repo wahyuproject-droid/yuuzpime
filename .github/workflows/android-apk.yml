@@ -1,7 +1,7 @@
-name: Build bundled Miru Android APK
+name: Build bundled Kitsune Android APK
 on:
   push:
-    branches: [android-miru-bundle]
+    branches: [android-kitsune-bundle]
     paths:
       - 'android/**'
       - 'mobile/**'
@@ -21,8 +21,8 @@ jobs:
       - name: Verify original source and build bundled React UI
         run: |
           set -euo pipefail
-          curl --fail --location --retry 3 'https://codeload.github.com/LuckDay21/miru-web/zip/15dd1b636d15f7bf740a4f768463a09c10411dda' -o "$RUNNER_TEMP/miru.zip"
-          python3 mobile/prepare.py "$RUNNER_TEMP/miru.zip" "$RUNNER_TEMP/miru"
+          curl --fail --location --retry 3 'https://codeload.github.com/dovakiin0/Kitsune/zip/c7fa855304c3c198f9b9a366e5006989d0535fad' -o "$RUNNER_TEMP/kitsune.zip"
+          python3 mobile/prepare.py "$RUNNER_TEMP/kitsune.zip" "$RUNNER_TEMP/miru"
           cd "$RUNNER_TEMP/miru"
           npm install --no-audit --no-fund
           npm run build
@@ -59,13 +59,13 @@ jobs:
       - name: Package complete source for editing
         run: |
           set -euo pipefail
-          mkdir -p dist/source-project/miru-original
-          unzip -q "$RUNNER_TEMP/miru.zip" -d dist/source-project/miru-original
+          mkdir -p dist/source-project/kitsune-original
+          unzip -q "$RUNNER_TEMP/kitsune.zip" -d dist/source-project/kitsune-original
           cp -a mobile android dist/source-project/
           rm -rf dist/source-project/android/assets
           mkdir -p dist/source-project/.github/workflows
           cp .github/workflows/android-apk.yml dist/source-project/.github/workflows/
-          cp "$RUNNER_TEMP/miru.zip" dist/source-project/miru-web-main.zip
+          cp "$RUNNER_TEMP/kitsune.zip" dist/source-project/Kitsune-master.zip
           (cd dist/source-project && zip -q -r ../YuuZPime-full-source.zip .)
           unzip -tq dist/YuuZPime-full-source.zip
       - name: Publish Android release
@@ -73,5 +73,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="miru-v3.1.${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/YuuZPime.apk dist/YuuZPime.apk.sha256 dist/YuuZPime-full-source.zip --target "$GITHUB_SHA" --title "YuuZPime Android $TAG" --notes "Bundled Miru React UI, weekly schedule, character details and AniList catalog, adapted to local Android assets. Complete unmodified original source included in separate source ZIP along with Android build adapters. No Vercel URL or cloud login. Requires internet for online catalog and official provider links. Integrated third-party streaming is not enabled. Temporary signing key."
+          TAG="kitsune-v4.0.${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/YuuZPime.apk dist/YuuZPime.apk.sha256 dist/YuuZPime-full-source.zip --target "$GITHUB_SHA" --title "YuuZPime Android $TAG" --notes "Kitsune original UI components and browser-adapted AniList catalog. Includes full verified 214-file original source ZIP and Android build adapters. No login or Vercel dependency. Unverified external streaming and Companion are not enabled. Temporary signing key."
