@@ -1,0 +1,31 @@
+name: Import verified Kitsune web source
+on:
+  push:
+    branches: [import-kitsune-web]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify and prepare exact Kitsune archive
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 'https://codeload.github.com/dovakiin0/Kitsune/zip/c7fa855304c3c198f9b9a366e5006989d0535fad' -o "$RUNNER_TEMP/kitsune.zip"
+          python3 scripts/prepare.py "$RUNNER_TEMP/kitsune.zip" "$RUNNER_TEMP/kitsune" scripts/watch.tsx
+      - name: Replace web main with verified Kitsune source
+        run: |
+          set -euo pipefail
+          git fetch origin refs/heads/main
+          test "$(git rev-parse FETCH_HEAD)" = '0548457cb6006c91beb558fa7260e405162f3f2c'
+          git switch -C main FETCH_HEAD
+          git rm -r --ignore-unmatch .
+          cp -a "$RUNNER_TEMP/kitsune/." .
+          git add -A -f
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Replace Miru web with verified Kitsune guest edition and original ArtPlayer'
+          git push origin HEAD:refs/heads/main
