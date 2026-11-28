@@ -53,7 +53,7 @@ const Layout = (props: Props) => {
     }
   }, [currentAnimeId, animeId]);
 
-  const { data: anime, isLoading } = useGetAnimeDetails(animeId as string);
+  const { data: anime, isLoading, isError, refetch } = useGetAnimeDetails(animeId as string);
 
   useEffect(() => {
     if (anime) {
@@ -156,6 +156,7 @@ const Layout = (props: Props) => {
   }, [episodes, episodeId, epNumberParam, setSelectedEpisode]);
 
   if (isLoading) return <Loading />;
+  if (isError || !anime?.anime?.info) return <Container className="mt-28 min-h-[55vh]"><div className="yuuz-panel text-center space-y-3"><h1 className="text-lg font-semibold">Detail anime belum tersedia</h1><p className="text-sm text-neutral-400">Gagal memuat informasi anime.</p><button type="button" className="rounded-xl bg-white text-black px-4 py-2" onClick={()=>void refetch()}>Coba lagi</button></div></Container>;
 
   return (
     anime?.anime.info && (
@@ -195,10 +196,10 @@ const Layout = (props: Props) => {
               options={SelectOptions}
               onChange={handleSelect}
             />
-            <h1 className="text-2xl md:font-black font-extrabold z-[100]">
+            <h1 className="text-2xl md:font-black font-extrabold z-0">
               {anime?.anime.info.name}
             </h1>
-            <p>{parse(anime?.anime.info.description as string)}</p>
+            <p>{parse(anime?.anime.info.description || "")}</p>
           </div>
         </div>
 

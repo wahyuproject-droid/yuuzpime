@@ -35,6 +35,7 @@ const fetchAniListEpisodesFallback = async (
         Media (id: $id, type: ANIME) {
           id
           episodes
+          status
           nextAiringEpisode {
             episode
             airingAt
@@ -52,14 +53,15 @@ const fetchAniListEpisodesFallback = async (
       }),
     });
 
+    if (!res.ok) throw new Error(`AniList HTTP ${res.status}`);
     const json = await res.json();
     const media = json?.data?.Media;
-    const totalEpCount = media?.nextAiringEpisode?.episode
-      ? media.nextAiringEpisode.episode - 1
-      : media?.episodes || 12;
-
+    const released = media?.nextAiringEpisode?.episode
+      ? Number(media.nextAiringEpisode.episode) - 1
+      : media?.status === "FINISHED" ? Number(media.episodes) : 0;
+    const totalEpCount = Number.isSafeInteger(released) && released > 0 ? released : 0;
     const episodes: Episode[] = Array.from(
-      { length: totalEpCount > 0 ? totalEpCount : 12 },
+      { length: totalEpCount },
       (_, i) => {
         const epNum = i + 1;
         return {
@@ -67,7 +69,7 @@ const fetchAniListEpisodesFallback = async (
           episodeId: `${epNum}`,
           number: epNum,
           isFiller: false,
-          hasSub: true,
+          hasSub: false,
           hasDub: false,
         };
       },
@@ -81,17 +83,9 @@ const fetchAniListEpisodesFallback = async (
     };
   } catch (err) {
     console.error("AniList fallback error:", err);
-    const fallbackEpisodes: Episode[] = Array.from({ length: 12 }, (_, i) => ({
-      title: `Episode ${i + 1}`,
-      episodeId: `${i + 1}`,
-      number: i + 1,
-      isFiller: false,
-      hasSub: true,
-      hasDub: false,
-    }));
     return {
-      totalEpisodes: 12,
-      episodes: fallbackEpisodes,
+      totalEpisodes: 0,
+      episodes: [],
       availableProviders: [],
     };
   }

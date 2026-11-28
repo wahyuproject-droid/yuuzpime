@@ -39,8 +39,12 @@ const EpisodePlaylist = ({
   const episodeRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [currentGroup, setCurrentGroup] = useState(
-    `1 - ${Math.min(50, episodes?.totalEpisodes!)}`,
+    `1 - ${Math.min(50, episodes.episodes.length)}`,
   );
+  useEffect(() => {
+    setSearch("");
+    setCurrentGroup(`1 - ${Math.min(50, episodes.episodes.length)}`);
+  }, [animeId, episodes.episodes.length]);
   const [search, setSearch] = useState("");
 
   const [start, end] = currentGroup.split(" - ").map(Number);
@@ -131,6 +135,7 @@ const EpisodePlaylist = ({
   };
 
   const handleOnSelectChange = (range: string) => {
+    setSearch("");
     setCurrentGroup(range);
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 0;
@@ -139,7 +144,7 @@ const EpisodePlaylist = ({
 
   const groupOptions = (): ISelectOptions[] => {
     let start = 1;
-    const end = episodes?.totalEpisodes;
+    const end = episodes.episodes.length;
     const options: ISelectOptions[] = [];
     // group episodes in range of 50
     while (start <= end!) {
@@ -181,18 +186,17 @@ const EpisodePlaylist = ({
         >
           {filteredEpisodes &&
             filteredEpisodes.map((episode, idx) => (
-              //@ts-expect-error type mismatch
-              <div key={idx} ref={(el) => (episodeRefs.current[idx] = el)}>
+              <div key={episode.episodeId || idx} ref={(el) => { episodeRefs.current[idx] = el; }}>
                 <EpisodeCard
                   subOrDub={subOrDub}
                   variant={"list"}
                   episode={episode}
                   animeId={animeId}
-                  watchedEpisodes={bookmarks?.[0].expand.watchHistory}
+                  watchedEpisodes={bookmarks?.[0]?.expand?.watchHistory}
                 />
               </div>
             ))}
-          {!filteredEpisodes?.length && !isLoading && "No Episodes"}
+          {!filteredEpisodes?.length && !isLoading && <p className="p-3 text-sm text-neutral-400">{search ? "Episode tidak ditemukan." : "Belum ada episode tersedia."}</p>}
           {isLoading && <PlaylistSkeleton />}
         </div>
       </div>

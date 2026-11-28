@@ -341,9 +341,12 @@ const VideoPlayerSection = () => {
     }
   };
 
+  if (!isLoadingEpisodes && !allEpisodesData?.episodes?.length) {
+    return <div className="yuuz-screen aspect-video grid place-items-center text-center p-5"><div className="space-y-2"><AlertCircle className="mx-auto text-neutral-400"/><p className="font-medium">Episode belum tersedia</p><p className="text-sm text-neutral-400">Provider belum mengembalikan daftar episode.</p></div></div>;
+  }
   if (!activeEpisodeId || isLoadingEpisodes || (isLoadingData && !useFallback)) {
     return (
-      <div className="h-auto aspect-video lg:max-h-[calc(100vh-150px)] min-h-[20vh] sm:min-h-[30vh] md:min-h-[40vh] lg:min-h-[60vh] w-full animate-pulse bg-slate-800 rounded-xl"></div>
+      <div className="h-auto aspect-video lg:max-h-[calc(100vh-150px)] min-h-[20vh] sm:min-h-[30vh] md:min-h-[40vh] lg:min-h-[60vh] w-full animate-pulse bg-neutral-800 rounded-xl"></div>
     );
   }
 
