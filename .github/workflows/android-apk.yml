@@ -47,5 +47,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="android-v1.0.${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/YuuZPime.apk dist/YuuZPime.apk.sha256 --target "$GITHUB_SHA" --title "YuuZPime Android $TAG" --notes "Signed Android WebView test build. Loads https://yuuzpime.vercel.app/ online. Android 6 or newer. Website features and availability follow the deployed site. This build uses a temporary signing key, so later builds may require uninstalling this build first."
+          TAG="android-v1.1.${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/YuuZPime.apk dist/YuuZPime.apk.sha256 --target "$GITHUB_SHA" --title "YuuZPime Android $TAG" --notes "Signed Android WebView test build (not a standalone Miru server). Loads https://yuuzpime.vercel.app/ online. Android 6 or newer. Website features and availability follow the deployed site. This build uses a temporary signing key, so later builds may require uninstalling this build first."
