@@ -3,7 +3,7 @@ description: A modern anime catalogue and watchlist app built with Flutter.
 
 publish_to: "none"
 
-version: 1.9.1+6
+version: 1.9.2+7
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -43,7 +43,7 @@ dev_dependencies:
   webview_flutter_platform_interface: ^2.15.1
 
 flutter_native_splash:
-  color: "#0d1321"
+  color: "#0b0b0b"
   image: assets/images/splash.png
 
   android: true

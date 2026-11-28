@@ -21,6 +21,8 @@ import '../widgets/recently_added_anime_card.dart';
 import '../widgets/tako_animation.dart';
 import '../widgets/tako_loading_indicator.dart';
 import '../widgets/update_alert_dialog.dart';
+import '../widgets/yuuz_brand.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.featuredResults});
@@ -98,6 +100,10 @@ class _HomeScreenState extends State<HomeScreen>
   bool get wantKeepAlive => true;
 
   Future<void> _checkForUpdate() async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      if (preferences.getBool('yuuz_auto_update') == false) return;
+    } catch (_) {}
     final updateManager = Get.find<UpdateManager>();
     await updateManager.checkForUpdate();
     if (mounted && updateManager.isUpdateAvailable) {
@@ -145,15 +151,8 @@ class _HomeScreenState extends State<HomeScreen>
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
         child: Row(
           children: [
-            Expanded(
-              child: Text('Discover',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 32,
-                    height: 1.1,
-                    letterSpacing: -.9,
-                    fontWeight: FontWeight.w800,
-                  )),
-            ),
+            Builder(builder: (context) => IconButton(tooltip: 'Menu', onPressed: () => Scaffold.of(context).openDrawer(), icon: const Icon(Icons.menu_rounded))),
+            const Expanded(child: YuuzWordmark()),
             Material(
               color: tkDarkBlue,
               shape: const CircleBorder(),

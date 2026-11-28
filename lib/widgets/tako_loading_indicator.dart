@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../utils/constants.dart';
+import 'yuuz_brand.dart';
 
 /// Small branded loader used for screen and player buffering states.
 class TakoLoadingIndicator extends StatelessWidget {
@@ -31,7 +32,7 @@ class TakoLoadingIndicator extends StatelessWidget {
               color: tkDarkBlue,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.play_arrow_rounded, size: size * .28),
+            child: YuuzMark(size: size * .32, tile: false),
           ),
         ],
       ),

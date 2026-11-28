@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/constants.dart';
 import '../utils/routes.dart';
+import 'yuuz_brand.dart';
 
 class AnimeDrawer extends StatelessWidget {
   const AnimeDrawer({super.key});
@@ -20,27 +20,7 @@ class AnimeDrawer extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 16, 16, 18),
               child: Row(
                 children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: tkGradientBlue,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.play_arrow_rounded, size: 25),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'YuuZPime',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 23,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -.7,
-                      ),
-                    ),
-                  ),
+                  const Expanded(child: YuuzWordmark()),
                   IconButton(
                     onPressed: Get.back,
                     icon: const Icon(Icons.close_rounded, color: tkMutedText),
@@ -49,62 +29,15 @@ class AnimeDrawer extends StatelessWidget {
               ),
             ),
             Container(
-              height: 168,
+              width: double.infinity,
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF25365A), Color(0xFF121A2C)],
-                ),
-              ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // The original square image was heavily cropped in this
-                  // wide banner. The transparent character art keeps the
-                  // entire subject in frame and leaves room for the copy.
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: Image.asset(
-                        'assets/images/rem_show.png',
-                        height: 156,
-                        fit: BoxFit.contain,
-                        alignment: Alignment.bottomRight,
-                      ),
-                    ),
-                  ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [Color(0xB5090A12), Colors.transparent],
-                      ),
-                    ),
-                  ),
-                  const Positioned(
-                    left: 16,
-                    right: 132,
-                    bottom: 16,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Your anime space',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w800)),
-                        SizedBox(height: 3),
-                        Text('Browse, save, and keep watching.',
-                            style: TextStyle(color: tkMutedText, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: tkSurface, borderRadius: BorderRadius.circular(24), border: Border.all(color: tkSurfaceBorder)),
+              child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                YuuzMark(size: 58), SizedBox(height: 18),
+                Text('Your anime space', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                SizedBox(height: 6), Text('Browse, save, and keep watching.', style: TextStyle(color: tkMutedText)),
+              ]),
             ),
             const SizedBox(height: 16),
             _DrawerItem(

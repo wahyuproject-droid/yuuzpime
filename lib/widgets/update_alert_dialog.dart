@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../utils/constants.dart';
 
-/// A compact prompt for the latest stable TakoPlay release.
+/// A compact prompt for the latest stable YuuZPime release.
 class UpdateAlertDialog extends StatelessWidget {
   const UpdateAlertDialog({
     super.key,
@@ -50,7 +51,7 @@ class UpdateAlertDialog extends StatelessWidget {
             borderRadius: BorderRadius.circular(25),
             child: Semantics(
               namesRoute: true,
-              label: 'Stable TakoPlay update available',
+              label: 'Stable YuuZPime update available',
               child: Stack(
                 children: [
                   Positioned(
@@ -92,7 +93,7 @@ class UpdateAlertDialog extends StatelessWidget {
                               ),
                               child: const Icon(
                                 Icons.system_update_alt_rounded,
-                                color: Color(0xFFB9AEFF),
+                                color: Color(0xFFE0E0E0),
                                 size: 24,
                               ),
                             ),
@@ -111,9 +112,9 @@ class UpdateAlertDialog extends StatelessWidget {
                         ),
                         const SizedBox(height: 22),
                         Text(
-                          'TAKOPLAY UPDATE',
+                          'YUUZPIME UPDATE',
                           style: textTheme.labelMedium?.copyWith(
-                            color: Color(0xFFB9AEFF),
+                            color: Color(0xFFE0E0E0),
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.3,
                           ),
@@ -129,7 +130,7 @@ class UpdateAlertDialog extends StatelessWidget {
                         ),
                         const SizedBox(height: 9),
                         Text(
-                          'Get the latest improvements and fixes with the newest release.',
+                          'Versi baru tersedia. Android akan meminta konfirmasi instalasi. Update tanpa menghapus data membutuhkan tanda tangan APK yang sama.',
                           style: textTheme.bodyMedium?.copyWith(
                             color: tkMutedText,
                             height: 1.5,
@@ -160,7 +161,7 @@ class UpdateAlertDialog extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'STABLE RELEASE',
+                                      'YUUZPIME RELEASE',
                                       style: textTheme.labelSmall?.copyWith(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w800,
@@ -170,7 +171,7 @@ class UpdateAlertDialog extends StatelessWidget {
                                     const SizedBox(height: 3),
                                     Text(
                                       isDirectApkDownload
-                                          ? 'Official APK download'
+                                          ? 'APK dari GitHub YuuZPime'
                                           : 'Official GitHub release page',
                                       style: textTheme.bodySmall?.copyWith(
                                         color: tkMutedText,
@@ -233,6 +234,6 @@ class UpdateAlertDialog extends StatelessWidget {
 
 Future<void> _launchUrl(String url) async {
   if (!await launchUrl(Uri.parse(url))) {
-    throw Exception('Could not launch $url');
+    Get.snackbar('Unduhan gagal', 'Buka halaman GitHub Releases untuk mencoba lagi.');
   }
 }

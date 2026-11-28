@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../bindings/managers_binding.dart';
-import '../theme/tako_theme.dart';
-import '../utils/tako_route.dart';
+import 'bindings/managers_binding.dart';
+import 'widgets/yuuz_brand.dart';
+import 'theme/tako_theme.dart';
+import 'utils/tako_route.dart';
 
 Future<void> main() async {
   _configureApp();
@@ -35,6 +36,7 @@ class MyApp extends StatelessWidget {
       title: 'YuuZPime',
       defaultTransition: Transition.cupertino,
       theme: TakoTheme.dark(),
+      builder: (context, child) => initialBinding != null ? (child ?? const SizedBox.shrink()) : YuuzIntro(child: child ?? const SizedBox.shrink()),
       initialRoute: '/',
       initialBinding: initialBinding ?? ManagerBinding(),
       getPages: TakoRoute.pages,

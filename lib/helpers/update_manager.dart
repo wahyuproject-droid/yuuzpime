@@ -1,66 +1,71 @@
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-
-import '../models/github.dart';
 import '../services/request_service.dart';
 import '../utils/constants.dart';
 
 enum UpdateStatus { unknown, checking, current, available, failed }
 
-/// Owns the result of the app update check for all screens.
 class UpdateManager extends GetxController {
   UpdateManager({RequestService? requestService, TargetPlatform? platform})
-      : _requestService = requestService,
-        _platform = platform ?? defaultTargetPlatform;
-
+      : _requestService = requestService, _platform = platform ?? defaultTargetPlatform;
   final RequestService? _requestService;
   final TargetPlatform _platform;
   UpdateStatus _status = UpdateStatus.unknown;
   String? _downloadLink;
+  String? _newVersion;
   bool _usesApkDownload = false;
-
   UpdateStatus get status => _status;
   String? get downloadLink => _downloadLink;
+  String? get newVersion => _newVersion;
   bool get usesApkDownload => _usesApkDownload;
   bool get isUpdateAvailable => _status == UpdateStatus.available;
 
+  static List<int>? _parts(Object? tag) {
+    if (tag is! String) return null;
+    final m = RegExp(r'^yuuzpime-tako-v(\d+)\.(\d+)\.(\d+)$').firstMatch(tag);
+    return m == null ? null : [for (var i = 1; i <= 3; i++) int.parse(m.group(i)!)];
+  }
+  static int _compare(List<int> a, List<int> b) {
+    for (var i = 0; i < 3; i++) { final c = a[i].compareTo(b[i]); if (c != 0) return c; }
+    return 0;
+  }
   Future<void> checkForUpdate() async {
+    if (_status == UpdateStatus.checking) return;
     _status = UpdateStatus.checking;
+    _downloadLink = null; _newVersion = null; _usesApkDownload = false;
     update();
     try {
-      final response = await (_requestService ?? Get.find<RequestService>())
-          .requestGitHubUpdate(latestRelease);
+      if (_platform != TargetPlatform.android) { _status = UpdateStatus.current; return; }
+      final response = await (_requestService ?? Get.find<RequestService>()).requestGitHubUpdate(latestRelease);
       final decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        throw const FormatException('Release response was not an object.');
+      if (decoded is! List) throw const FormatException('Expected release list');
+      var newest = _parts(version)!;
+      for (final item in decoded) {
+        if (item is! Map || item['draft'] == true) continue;
+        final tag = item['tag_name'];
+        final numbers = _parts(tag);
+        if (numbers == null || _compare(numbers, newest) <= 0) continue;
+        final assets = item['assets'];
+        if (assets is! List) continue;
+        // Only use release assets from this project's official GitHub repository.
+        String? candidate;
+        for (final asset in assets) {
+          if (asset is! Map) continue;
+          final name = asset['name'];
+          if (name != 'YuuZPime.apk' && name != 'YuuZPime-debug.apk') continue;
+          final url = asset['browser_download_url'];
+          final expected = 'https://github.com/wahyuproject-droid/yuuzpime/releases/download/$tag/$name';
+          if (url == expected) {
+            candidate = expected;
+            if (name == 'YuuZPime.apk') break;
+          }
+        }
+        if (candidate == null) continue;
+        newest = numbers; _downloadLink = candidate; _newVersion = tag as String; _usesApkDownload = true;
       }
-      final release = Github.fromJson(decoded);
-      final isAndroid = _platform == TargetPlatform.android;
-      final apkLink = release.apkDownloadLink?.trim();
-      final link = isAndroid
-          ? apkLink ?? release.releasePageUrl ?? release.downloadLink
-          : release.releasePageUrl ?? release.downloadLink;
-      if (release.isPrerelease ||
-          release.isDraft ||
-          release.version == null ||
-          version == release.version!.trim() ||
-          link == null ||
-          link.isEmpty) {
-        _status = UpdateStatus.current;
-        _downloadLink = null;
-        _usesApkDownload = false;
-      } else {
-        _status = UpdateStatus.available;
-        _downloadLink = link;
-        _usesApkDownload = isAndroid && apkLink != null;
-      }
-    } catch (_) {
-      _status = UpdateStatus.failed;
-      _downloadLink = null;
-      _usesApkDownload = false;
-    }
-    update();
+      _status = _downloadLink == null ? UpdateStatus.current : UpdateStatus.available;
+    } catch (_) { _status = UpdateStatus.failed; _downloadLink = null; _newVersion = null; _usesApkDownload = false; }
+    finally { update(); }
   }
 }

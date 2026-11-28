@@ -94,7 +94,7 @@ class _MainScreenState extends State<MainScreen> {
             decoration: BoxDecoration(
               color: tkDarkBlue,
               borderRadius: BorderRadius.circular(36),
-              border: Border.all(color: const Color(0xFF302D55)),
+              border: Border.all(color: tkSurfaceBorder),
             ),
             child: Row(
               children: [
@@ -134,14 +134,14 @@ class _MainScreenState extends State<MainScreen> {
             children: [
               Icon(icon,
                   size: 22,
-                  color: selected ? tkDarkerBlue : const Color(0xFFD3D1E5)),
+                  color: selected ? Colors.white : tkMutedText),
               if (selected) ...[
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(label,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.dmSans(
-                        color: tkDarkerBlue,
+                        color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                       )),
