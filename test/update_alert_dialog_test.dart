@@ -1,0 +1,57 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:tako_play/theme/tako_theme.dart';
+import 'package:tako_play/widgets/update_alert_dialog.dart';
+
+void main() {
+  testWidgets('uses the dark release-card design and can be dismissed',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TakoTheme.dark(),
+        home: const _DialogLauncher(),
+      ),
+    );
+
+    await tester.tap(find.text('Show update'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(UpdateAlertDialog), findsOneWidget);
+    expect(find.text('A new version is ready'), findsOneWidget);
+    expect(find.text('STABLE RELEASE'), findsOneWidget);
+    expect(
+      find.text(
+          'Get the latest improvements and fixes with the newest release.'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(FilledButton, 'View release'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Close update prompt'));
+    await tester.pumpAndSettle();
+    expect(find.byType(UpdateAlertDialog), findsNothing);
+    await tester.tap(find.text('Show update'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Maybe later'));
+    await tester.pumpAndSettle();
+    expect(find.byType(UpdateAlertDialog), findsNothing);
+  });
+}
+
+class _DialogLauncher extends StatelessWidget {
+  const _DialogLauncher();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: Center(
+          child: TextButton(
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (_) => const UpdateAlertDialog(
+                downloadLink: 'https://example.com/tako-play.apk',
+              ),
+            ),
+            child: const Text('Show update'),
+          ),
+        ),
+      );
+}

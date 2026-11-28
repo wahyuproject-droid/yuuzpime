@@ -1,0 +1,57 @@
+name: tako_play
+description: A modern anime catalogue and watchlist app built with Flutter.
+
+publish_to: "none"
+
+version: 1.9.1+6
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  better_player: ^1.33.0
+  cached_network_image: ^4.0.6
+  connectivity_plus: ^7.3.2
+  cryptography: ^2.7.0
+  cupertino_icons: ^2.0.0
+  flutter:
+    sdk: flutter
+  flutter_cache_manager: ^3.3.0
+  get: ^4.7.3
+  google_fonts: ^9.0.0
+  html: ^0.15.7
+  http: ^1.6.0
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  shared_preferences: ^2.5.3
+  sqflite: ^2.4.2
+  url_launcher: ^6.3.2
+  uuid: ^4.6.0
+  webview_flutter: ^4.13.1
+  webview_flutter_wkwebview: ^3.23.0
+
+dev_dependencies:
+  connectivity_plus_platform_interface: ^2.0.1
+  flutter_lints: ^6.0.0
+  flutter_native_splash: ^2.4.4
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  sqflite_common_ffi: ^2.4.0+2
+  url_launcher_platform_interface: ^2.3.2
+  webview_flutter_platform_interface: ^2.15.1
+
+flutter_native_splash:
+  color: "#0d1321"
+  image: assets/images/splash.png
+
+  android: true
+  ios: true
+  web: false
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
