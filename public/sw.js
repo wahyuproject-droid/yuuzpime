@@ -1,9 +1,9 @@
-const CACHE_NAME = 'eliasdex-pwa-v3';
+const CACHE_NAME = 'yuuzpime-pwa-v4';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
   '/favicon.ico',
-  '/globals.css'
+  '/icon.svg?v=yuuz-v2'
 ];
 
 self.addEventListener('install', (event) => {
@@ -22,7 +22,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && (key.startsWith('eliasdex-') || key.startsWith('yuuzpime-'))) {
             return caches.delete(key);
           }
         })
@@ -58,7 +58,7 @@ self.addEventListener('fetch', (event) => {
           return caches.match(request).then((cachedResponse) => {
             if (cachedResponse) return cachedResponse;
             if (request.headers.get('accept')?.includes('text/html')) {
-              return caches.match('/') || new Response('Offline mode', { status: 503, headers: { 'Content-Type': 'text/html' } });
+              return caches.match('/').then(cached => cached || new Response('Offline mode', { status: 503, headers: { 'Content-Type': 'text/html' } }));
             }
           });
         })

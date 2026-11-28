@@ -1,5 +1,5 @@
 export const ADS_CONFIG = {
-  enabled: process.env.NEXT_PUBLIC_ADS_ENABLED !== 'false',
+  enabled: false,
 
   nativeBanner: {
     containerId: 'container-d2c8954998da757ea389a9c99c9ba997',

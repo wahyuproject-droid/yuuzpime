@@ -4,8 +4,8 @@ import { MangaPage } from '@/views/MangaPage';
 
 export async function generateMetadata(): Promise<Metadata> {
   return constructMetadata({
-    title: 'Read Manga Online',
-    description: 'Browse and read manga chapters online for free. Discover popular manga series with high-quality scans and fast updates.',
+    title: 'Manga Catalog',
+    description: 'Explore manga information, covers, and the local reader.',
     type: 'website',
     canonicalUrl: '/manga',
   });

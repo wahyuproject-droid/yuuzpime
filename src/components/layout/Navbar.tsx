@@ -135,7 +135,7 @@ export const Navbar: React.FC = () => {
   className="flex items-center gap-2.5 group cursor-pointer shrink-0"
  >
 <img
-   src="/icon.svg"
+   src="/icon.svg?v=yuuz-v2"
    alt="YuuZPime"
    className="w-9 h-9 rounded-xl object-contain"
  />

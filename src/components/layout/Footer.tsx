@@ -8,7 +8,7 @@ export const Footer: React.FC = () => {
     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
      <div className="md:col-span-2 space-y-3">
       <div className="flex items-center gap-2">
-       <img src="/icon.svg" alt="YuuZPime" className="w-7 h-7 rounded-lg object-contain" />
+       <img src="/icon.svg?v=yuuz-v2" alt="YuuZPime" className="w-7 h-7 rounded-lg object-contain" />
        <span className="font-heading font-bold text-lg text-surface-primary">
          YuuZ<span className="text-orange-400">Pime</span>
        </span>
