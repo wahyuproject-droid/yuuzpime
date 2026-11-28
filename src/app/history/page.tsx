@@ -1,8 +1,0 @@
-"use client";
-import {useEffect,useState} from "react";
-import Link from "next/link";
-import {History,Play,Trash2} from "lucide-react";
-type Entry={anime:{id:string;title:string;poster:string};episodes:string[]};
-export default function Page(){const [items,setItems]=useState<Entry[]>([]);useEffect(()=>{try{const a=JSON.parse(localStorage.getItem("watched")||"[]");if(Array.isArray(a))setItems(a.filter(x=>x?.anime?.id&&Array.isArray(x.episodes)).reverse())}catch{}},[]);
- return <section className="yuuz-watch min-h-[65vh]"><div className="flex items-center justify-between gap-3"><h1 className="flex items-center gap-3 text-2xl font-bold"><History/> Riwayat tontonan</h1>{items.length>0&&<button className="text-xs text-neutral-400 flex gap-1 items-center" onClick={()=>{if(window.confirm("Hapus semua riwayat tontonan?")){try{localStorage.removeItem("watched")}catch{}setItems([])}}}><Trash2 size={15}/> Hapus</button>}</div>{!items.length?<p className="yuuz-panel text-neutral-400 text-sm">Belum ada riwayat tontonan. Progres player disimpan di perangkat ini.</p>:<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{items.map(x=><Link className="yuuz-panel flex items-center gap-3" key={x.anime.id} href={"/anime/watch?anime="+encodeURIComponent(x.anime.id)+"&ep="+encodeURIComponent(x.episodes[x.episodes.length-1]||"1")}>{x.anime.poster&&<img className="h-20 w-14 shrink-0 rounded-lg object-cover" loading="lazy" src={x.anime.poster} alt=""/>}<div className="min-w-0 flex-1"><strong className="line-clamp-2">{x.anime.title}</strong><p className="text-xs text-neutral-400">Episode {x.episodes[x.episodes.length-1]||"1"}</p></div><Play size={18}/></Link>)}</div>}</section>
-}

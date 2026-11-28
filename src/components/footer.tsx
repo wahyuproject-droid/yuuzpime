@@ -1,3 +1,0 @@
-import Link from "next/link";
-import Image from "next/image";
-export default function Footer(){return <footer className="yuuz-footer"><div className="mx-auto max-w-6xl flex flex-wrap items-center justify-between gap-4"><div><Link href="/" className="inline-flex items-center gap-2 font-extrabold tracking-tight text-lg"><Image src="/yuuz-logo.svg" alt="" width={30} height={30}/>YuuZPime</Link><p className="mt-2 text-xs text-neutral-400">Modifikasi oleh YuuZ</p></div><div className="flex flex-wrap items-center gap-4 text-xs text-neutral-300"><a href="https://sociabuzz.com/yuuzdisini" target="_blank" rel="noopener noreferrer">SociaBuzz</a><a href="https://github.com/wahyuproject-droid/yuuzpime/blob/main/LICENSE">Lisensi MIT · Kitsune</a></div></div></footer>;}
